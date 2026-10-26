@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Cookie-backed theme preference</title>
+		<link rel="stylesheet" href="./styles.css" />
+		<script type="importmap">
+			{
+				"imports": {
+					"@aarongustafson/form-multi-switch": "../node_modules/@aarongustafson/form-multi-switch/index.js"
+				}
+			}
+		</script>
+		<script type="module" src="../define.js"></script>
+	</head>
+	<body>
+		<theme-switcher
+			storage-key="theme-switcher-cookie-demo"
+			cookie
+			label="Saved site appearance"
+		></theme-switcher>
+		<p>
+			Select a theme here to save it to localStorage and a cookie named
+			<code>theme-switcher-cookie-demo</code>. Reload to restore it.
+		</p>
+	</body>
+</html>

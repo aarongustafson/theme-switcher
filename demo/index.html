@@ -1,95 +1,548 @@
 <!doctype html>
 <html lang="en">
 	<head>
-		<meta charset="UTF-8" />
+		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>&lt;theme-switcher&gt; Web Component Demo</title>
 		<link rel="stylesheet" href="./styles.css" />
-		<style>
-			/* Demo-specific styles */
-		</style>
+		<script type="importmap">
+			{
+				"imports": {
+					"@aarongustafson/form-multi-switch": "../node_modules/@aarongustafson/form-multi-switch/index.js"
+				}
+			}
+		</script>
+		<script type="module" src="./demo.js"></script>
 	</head>
 	<body>
 		<header>
 			<h1>&lt;theme-switcher&gt;</h1>
 			<p>
-				A light-DOM tri-state theme picker built on form-multi-switch. See the
+				Choose System, Light, or Dark using native radios. See the
 				<a
 					href="https://github.com/aarongustafson/theme-switcher/blob/main/README.md"
 					>README</a
 				>
-				for installation and API documentation.
+				for installation and the API.
 			</p>
+			<p>
+				All controls on this page share its theme and use the demo-only
+				storage key <code>theme-switcher-demo</code>. The Sepia example
+				has its own document so it can use a different set of choices.
+			</p>
+			<p>
+				Use <kbd>Tab</kbd> to reach a group, arrow keys to move between
+				choices, and <kbd>Space</kbd> to select. Only System follows
+				changes to your device’s color preference.
+			</p>
+			<noscript>
+				<p>
+					JavaScript is off. Authored radios still work as form
+					controls, but they don’t change this page’s theme. Generated
+					controls are unavailable.
+				</p>
+			</noscript>
 		</header>
-
 		<main>
-			<!-- Basic Example -->
 			<section>
-				<h2>Basic Example</h2>
-				<p>A simple demonstration of the component.</p>
-
+				<h2>Start with three choices</h2>
 				<div class="demo-section">
-					<h3>Basic Usage</h3>
-					<p>Description of this example.</p>
+					<h3>Configure the control with attributes</h3>
+					<p>
+						The component supplies a named radio group and its
+						default styles. It sets <code>data-theme</code> on
+						<code>&lt;html&gt;</code>; the page’s CSS supplies the
+						colors. An explicit choice stays put when your device
+						switches modes.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher
+  label="Color theme"
+  storage-key="theme-switcher-demo"
+&gt;&lt;/theme-switcher&gt;
+
+/* Your page styles */
+:root { color-scheme: light dark; }
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}</code></pre>
+						<div class="demo">
+							<theme-switcher
+								id="default"
+								label="Color theme"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<output id="theme-status" aria-live="polite"
+								>Waiting for the component.</output
+							>
+							<p>
+								<small
+									>Reload to try restoring the saved
+									choice.</small
+								>
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section>
+				<h2>Keep your markup and form behavior</h2>
+				<div class="demo-section">
+					<h3>Enhance an authored fieldset</h3>
+					<p>
+						The legend and labels name the controls, and the checked
+						radio establishes the reset default. These controls
+						still work without JavaScript. Conflicting host
+						configuration doesn’t replace authored choices, names,
+						labels, or values.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;form&gt;
+  &lt;theme-switcher
+    storage-key="theme-switcher-demo"&gt;
+    &lt;fieldset&gt;
+      &lt;legend&gt;Reading appearance&lt;/legend&gt;
+      &lt;label&gt;&lt;input type="radio"
+        name="appearance" value="system"
+        checked&gt;Use my device&lt;/label&gt;
+      &lt;label&gt;&lt;input type="radio"
+        name="appearance"
+        value="light"&gt;Light&lt;/label&gt;
+      &lt;label&gt;&lt;input type="radio"
+        name="appearance"
+        value="dark"&gt;Dark&lt;/label&gt;
+    &lt;/fieldset&gt;
+  &lt;/theme-switcher&gt;
+  &lt;button&gt;Inspect FormData&lt;/button&gt;
+  &lt;button type="reset"&gt;Reset&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+						<div class="demo">
+							<form id="appearance-form">
+								<theme-switcher
+									id="authored"
+									storage-key="theme-switcher-demo"
+								>
+									<fieldset>
+										<legend>Reading appearance</legend>
+										<label
+											><input
+												type="radio"
+												name="appearance"
+												value="system"
+												checked
+											/>Use my device</label
+										>
+										<label
+											><input
+												type="radio"
+												name="appearance"
+												value="light"
+											/>Light</label
+										>
+										<label
+											><input
+												type="radio"
+												name="appearance"
+												value="dark"
+											/>Dark</label
+										>
+									</fieldset>
+								</theme-switcher>
+								<p>
+									<button>Inspect FormData</button>
+									<button type="reset">Reset</button>
+								</p>
+								<output aria-live="polite"
+									>Submit to inspect the selected
+									preference.</output
+								>
+							</form>
+							<p>
+								<small
+									>Reset restores System, including the page
+									theme and saved preference.</small
+								>
+							</p>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section>
+				<h2>Make it fit your site</h2>
+				<div class="demo-section">
+					<h3>Restyle the segments</h3>
+					<p>
+						The same <code>--multi-switch-*</code> properties work
+						here as in <code>&lt;form-multi-switch&gt;</code>.
+						Default styles live in a cascade layer, so your CSS can
+						override them.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher class="pill"
+  label="Site appearance"&gt;
+&lt;/theme-switcher&gt;
+
+.pill {
+  --multi-switch-radius: 999px;
+  --multi-switch-border: #173f63;
+  --multi-switch-background: #eef4ff;
+  --multi-switch-color: #173f63;
+  --multi-switch-selected-background: #173f63;
+  --multi-switch-selected-color: #fff;
+}</code></pre>
+						<div class="demo">
+							<theme-switcher
+								class="pill"
+								label="Site appearance"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<p>
+								<small
+									>The border joins remain connected,
+									including at narrow widths.</small
+								>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="demo-section">
+					<h3>Add icons without losing the labels</h3>
+					<p>
+						CSS masks add decorative icons. The text still names
+						each radio. Add <code>icon-only</code> to hide that text
+						visually, not from assistive technology.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher class="icons"
+  label="Icons and text"&gt;
+&lt;/theme-switcher&gt;
+&lt;theme-switcher class="icons" icon-only
+  label="Icon-only appearance"&gt;
+&lt;/theme-switcher&gt;
+
+.icons [data-multi-switch-choice]::before {
+  content: '';
+  inline-size: 1.25em;
+  block-size: 1.25em;
+  background: currentColor;
+  mask: var(--theme-icon) center / contain
+    no-repeat;
+}
+.icons [data-value='dark'] {
+  --theme-icon: url('./dark.svg');
+}
+/* Add system.svg and light.svg too. */</code></pre>
+						<div class="demo">
+							<theme-switcher
+								class="icons"
+								label="Icons and text"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<theme-switcher
+								id="icon-only"
+								class="icons"
+								icon-only
+								label="Icon-only appearance"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<p>
+								<small
+									>Try keyboard focus and your system’s
+									high-contrast mode.</small
+								>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="demo-section">
+					<h3>Translate the labels</h3>
+					<p>
+						Supply the group label and the three choice labels. With
+						authored markup or custom choices, write your labels
+						there instead. Logical CSS properties also support
+						right-to-left layouts.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher lang="fr"
+  label="Thème"
+  system-label="Appareil"
+  light-label="Clair"
+  dark-label="Sombre"&gt;
+&lt;/theme-switcher&gt;
+
+&lt;theme-switcher dir="rtl"
+  label="Right-to-left layout"&gt;
+&lt;/theme-switcher&gt;</code></pre>
+						<div class="demo">
+							<theme-switcher
+								lang="fr"
+								label="Thème"
+								system-label="Appareil"
+								light-label="Clair"
+								dark-label="Sombre"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<theme-switcher
+								dir="rtl"
+								label="Right-to-left layout"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+						</div>
+					</div>
+				</div>
+				<div class="demo-section">
+					<h3>Add a reading palette</h3>
+					<p>
+						Custom choices include the three standard values. Your
+						CSS handles the extra palette and its
+						<code>color-scheme</code>. This example runs in a
+						separate document: controls sharing a page should offer
+						the same themes.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher storage="none"
+  label="Reading palette"
+  choices='[
+    {"label":"System","value":"system"},
+    {"label":"Light","value":"light"},
+    {"label":"Dark","value":"dark"},
+    {"label":"Sepia","value":"sepia"}
+  ]'&gt;
+&lt;/theme-switcher&gt;
+
+:root[data-theme='sepia'] {
+  color-scheme: light;
+  --page-background: #f6ecd6;
+  --page-color: #493921;
+}</code></pre>
+						<div class="demo">
+							<iframe
+								src="./extra.html"
+								title="Separate reading palette example with a Sepia theme"
+							></iframe>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section>
+				<h2>Work with the preference</h2>
+				<div class="demo-section">
+					<h3>Use the JavaScript API without saving a choice</h3>
+					<p>
+						<code>.value</code> applies a preference and updates the
+						other controls. <code>storage="none"</code> skips
+						storage for this control; it doesn’t create an
+						independent page theme. This button’s update won’t be
+						saved by its peers either.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher id="temporary" storage="none"
+  label="Temporary preference"&gt;
+&lt;/theme-switcher&gt;
+
+const control =
+  document.querySelector('#temporary');
+await control.ready;
+control.value = 'system';
+
+control.addEventListener(
+  'theme-switcher:change', ({ detail }) =&gt; {
+    console.log(detail.value,
+      detail.resolvedTheme, detail.source);
+  });</code></pre>
+						<div class="demo">
+							<theme-switcher
+								id="temporary"
+								storage="none"
+								label="Temporary preference"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<button type="button" id="use-system" disabled>
+								Follow my device without saving
+							</button>
+							<output id="api-status" aria-live="polite"
+								>The API will be available after setup.</output
+							>
+						</div>
+					</div>
+				</div>
+				<div class="demo-section">
+					<h3>Back the preference with a cookie</h3>
+					<p>
+						LocalStorage works without configuration. Add
+						<code>cookie</code> to save the preference in both
+						places, so your server can use it too. A bare attribute
+						shares the storage key; a value gives the cookie a
+						separate name. On startup, a valid localStorage value
+						wins, with the cookie as a fallback.
+						<code>storage="none"</code> disables both. This isolated
+						example uses its own key so its cookie settings don’t
+						conflict with the other controls.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher
+  storage-key="theme-switcher-cookie-demo"
+  cookie
+  label="Saved site appearance"&gt;
+&lt;/theme-switcher&gt;
+
+&lt;!-- Or choose a different cookie name: --&gt;
+&lt;theme-switcher
+  storage-key="theme-switcher-cookie-demo"
+  cookie="server-theme"&gt;
+&lt;/theme-switcher&gt;</code></pre>
+						<div class="demo">
+							<iframe
+								src="./cookie.html"
+								title="Theme preference saved to localStorage and a cookie"
+							></iframe>
+						</div>
+					</div>
+				</div>
+				<div class="demo-section">
+					<h3>Load an optional behavior module</h3>
+					<p>
+						Theme behavior is already built in; you don’t need
+						<code>script</code> for it. Use this inherited option
+						for extra behavior. The component waits for your
+						module’s <code>initialize()</code> before finishing
+						setup. This module listens for theme events and returns
+						cleanup.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;theme-switcher
+  script="./observe.js"
+  label="Module-connected preference"&gt;
+&lt;/theme-switcher&gt;
+
+// observe.js
+export function initialize(control, { signal }) {
+  const output =
+    control.parentElement.querySelector('output');
+  control.addEventListener(
+    'theme-switcher:change', ({ detail }) =&gt; {
+      output.textContent =
+        `${detail.value} → ${detail.resolvedTheme}`;
+    }, { signal });
+  return () =&gt; {
+    output.textContent = 'Listener disconnected.';
+  };
+}</code></pre>
+						<div class="demo">
+							<theme-switcher
+								script="./observe.js"
+								label="Module-connected preference"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<output aria-live="polite"
+								>Loading the optional module.</output
+							>
+						</div>
+					</div>
+				</div>
+			</section>
+			<section>
+				<h2>Plan for loading and failure</h2>
+				<div class="demo-section">
+					<h3>Keep a native fallback</h3>
+					<p>
+						This frame deliberately doesn’t load the component. The
+						radios remain usable, and the form still has a value to
+						submit. Disable JavaScript and reload the whole demo to
+						compare authored controls with generated ones.
+					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher&gt;
-  &lt;p&gt;Content goes here&lt;/p&gt;
-&lt;/theme-switcher&gt;</code></pre>
+  &lt;fieldset&gt;
+    &lt;legend&gt;Color theme&lt;/legend&gt;
+    &lt;label&gt;&lt;input type="radio"
+      name="theme" value="system"
+      checked&gt;System&lt;/label&gt;
+    &lt;!-- Light and Dark radios too --&gt;
+  &lt;/fieldset&gt;
+&lt;/theme-switcher&gt;
+
+/* No loading-state CSS hides the inputs.
+   No module means no page-theme behavior. */</code></pre>
 						<div class="demo">
-							<theme-switcher>
-								<p>Content goes here</p>
-							</theme-switcher>
+							<iframe
+								src="./fallback.html"
+								title="Native theme radios without the component module"
+							></iframe>
 						</div>
 					</div>
 				</div>
-			</section>
-
-			<!-- Example with Attributes -->
-			<section>
-				<h2>Example with Attributes</h2>
-				<p>Demonstrating component attributes.</p>
-
 				<div class="demo-section">
-					<h3>Using Attributes</h3>
-					<p>Description of this example with attributes.</p>
+					<h3>Handle unavailable storage</h3>
+					<p>
+						A blocked storage API doesn’t stop the switcher from
+						working. This isolated example simulates that
+						restriction and displays the diagnostic. Configuration
+						mistakes reject
+						<code>ready</code>; storage errors don’t.
+					</p>
 					<div class="code-demo-pair">
-						<pre><code>&lt;theme-switcher example-attribute="value"&gt;
-  &lt;p&gt;Content with attributes&lt;/p&gt;
-&lt;/theme-switcher&gt;</code></pre>
+						<pre><code>control.addEventListener(
+  'theme-switcher:error', ({ detail }) =&gt; {
+    console.error(detail.phase, detail.error);
+  });
+
+// A storage error still allows:
+await control.ready;
+control.value = 'dark';</code></pre>
 						<div class="demo">
-							<theme-switcher example-attribute="value">
-								<p>Content with attributes</p>
-							</theme-switcher>
+							<iframe
+								src="./storage.html"
+								title="Theme control with intentionally unavailable storage"
+							></iframe>
 						</div>
 					</div>
 				</div>
-			</section>
-
-			<!-- API Reference -->
-			<section class="api-reference">
-				<h2>API Reference</h2>
-				<p>
-					For complete documentation of attributes, events, and
-					browser support, see the
-					<a
-						href="https://github.com/aarongustafson/theme-switcher/blob/main/README.md"
-						>README</a
-					>.
-				</p>
+				<div class="demo-section">
+					<h3>Apply a saved choice before first paint</h3>
+					<p>
+						For a saved preference to affect the first paint,
+						restore it before your stylesheets load. Match the
+						storage key and allowed themes to your control. The
+						component then picks up that preference when it’s ready.
+					</p>
+					<div class="code-demo-pair">
+						<pre><code>&lt;script&gt;
+  try {
+    const theme = localStorage.getItem(
+      'theme-switcher-demo');
+    if (['system', 'light', 'dark']
+        .includes(theme)) {
+      document.documentElement
+        .setAttribute('data-theme', theme);
+    }
+  } catch (error) {
+    console.warn('Theme storage unavailable.',
+      error);
+  }
+&lt;/script&gt;
+&lt;link rel="stylesheet" href="site.css"&gt;</code></pre>
+						<div class="demo">
+							<p>
+								This page doesn’t run that early script, so you
+								can see the normal loading path. The script
+								belongs in your document’s head, before CSS—not
+								in a control’s initializer.
+							</p>
+							<p id="demo-errors" role="status"></p>
+						</div>
+					</div>
+				</div>
 			</section>
 		</main>
-
 		<footer>
 			<p>
 				Made with ❤️ by
 				<a href="https://github.com/aarongustafson">Aaron Gustafson</a>.
-				View the source on
-				<a href="https://github.com/aarongustafson/theme-switcher"
-					>GitHub</a
-				>.
 			</p>
 		</footer>
-
-		<script src="../define.js" type="module"></script>
 	</body>
 </html>

@@ -5,6 +5,11 @@ export default [
 	...eslintConfig,
 	eslintConfigPrettier,
 	{
-		ignores: ['node_modules/**', 'coverage/**', 'demo/**'],
+		ignores: [
+			'node_modules/**',
+			'coverage/**',
+			'**/*.html',
+			'test/types.ts',
+		],
 	},
 ];

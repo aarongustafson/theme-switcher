@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Unavailable storage example</title>
+		<link rel="stylesheet" href="./styles.css" />
+		<script type="importmap">
+			{
+				"imports": {
+					"@aarongustafson/form-multi-switch": "../node_modules/@aarongustafson/form-multi-switch/index.js"
+				}
+			}
+		</script>
+		<script type="module" src="./storage.js"></script>
+	</head>
+	<body>
+		<theme-switcher label="Theme with blocked storage"></theme-switcher>
+		<output role="status"
+			>Waiting for the simulated storage restriction.</output
+		>
+		<p>
+			The page still changes theme, but this example can’t save the
+			choice.
+		</p>
+	</body>
+</html>
