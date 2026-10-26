@@ -409,8 +409,37 @@ icons that remain distinguishable in forced-colors mode. Don’t hide the entire
 label or remove its accessible text.
 
 Native radios provide Tab, arrow-key, and Space interaction, checked state, and
-form behavior. The default focus outline uses `:focus-visible`. Keep a visible
-group name, sufficient contrast, and a clear selected state when you restyle it.
+form behavior. The default focus outline uses `:focus-visible`. Preserve clear
+visual context, sufficient contrast, and a clear selected state when you restyle it.
+
+### Hide the legend visually
+
+If the surrounding content already makes the control’s purpose clear, you can
+hide the legend visually while keeping its text as the radio group’s accessible
+name. Add a class and this CSS:
+
+```html
+<theme-switcher class="hide-legend" label="Color theme"></theme-switcher>
+```
+
+```css
+theme-switcher.hide-legend legend {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+```
+
+This works with a generated legend or your own authored `<legend>`. Keep a
+meaningful `label` for generated markup, or text in your authored legend. Don’t
+remove the legend or use `hidden`, `aria-hidden="true"`, `display: none`, or
+`visibility: hidden` to hide it from assistive technology.
 
 ## Development
 

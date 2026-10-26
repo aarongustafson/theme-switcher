@@ -4,6 +4,8 @@ const first = document.querySelector('#default');
 const temporary = document.querySelector('#temporary');
 const button = document.querySelector('#use-system');
 const form = document.querySelector('#appearance-form');
+const cookieFrame = document.querySelector('#cookie-demo');
+const refreshCookie = document.querySelector('#refresh-cookie-demo');
 
 first.addEventListener('theme-switcher:change', ({ detail }) => {
 	document.querySelector('#theme-status').textContent =
@@ -24,6 +26,10 @@ document.addEventListener('form-multi-switch:error', ({ detail }) => {
 button.addEventListener('click', () => {
 	temporary.value = 'system';
 });
+refreshCookie.addEventListener('click', () => {
+	cookieFrame.src = cookieFrame.src;
+});
+refreshCookie.disabled = false;
 form.addEventListener('submit', (event) => {
 	event.preventDefault();
 	form.querySelector('output').textContent = JSON.stringify(

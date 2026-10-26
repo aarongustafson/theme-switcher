@@ -148,6 +148,60 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
+	it('documents the same visually hidden legend CSS used by the icon-only demo', () => {
+		const template = document.createElement('template');
+		template.innerHTML = readFileSync(
+			new URL('demo/index.html', root),
+			'utf8',
+		);
+		const control = template.content.querySelector('#icon-only');
+		expect(control.classList.contains('hide-legend')).toBe(true);
+		expect(control.getAttribute('label')).toBe('Icon-only appearance');
+		const css = readFileSync(new URL('demo/styles.css', root), 'utf8');
+		const rule = css.match(
+			/theme-switcher\.hide-legend legend \{[^}]+\}/,
+		)?.[0];
+		expect(rule).toBeDefined();
+		expect(rule).toContain('clip-path: inset(50%)');
+		expect(rule).not.toMatch(/display:\s*none|visibility:\s*hidden/);
+		const readme = readFileSync(new URL('README.md', root), 'utf8');
+		expect(readme.replace(/\s+/g, '')).toContain(rule.replace(/\s+/g, ''));
+	});
+
+	it('provides a working refresh button below the cookie iframe', async () => {
+		const template = document.createElement('template');
+		template.innerHTML = readFileSync(
+			new URL('demo/index.html', root),
+			'utf8',
+		);
+		const frame = template.content.querySelector(
+			'iframe[src="./cookie.html"]',
+		);
+		const button = frame.nextElementSibling;
+		expect(button?.tagName).toBe('BUTTON');
+		expect(button.type).toBe('button');
+		expect(button.getAttribute('aria-controls')).toBe(frame.id);
+		expect(button.textContent.trim()).toBe('Refresh cookie example');
+		expect(button.disabled).toBe(true);
+		const temporary = template.content.querySelector('#temporary');
+		Object.defineProperty(temporary, 'ready', { value: Promise.resolve() });
+		const reload = vi.spyOn(frame, 'src', 'set');
+		const source = frame.src;
+		const code = readFileSync(
+			new URL('demo/demo.js', root),
+			'utf8',
+		).replace(/^import ['"]\.\.\/define\.js['"];\s*/, '');
+		await runInNewContext(`(async () => {${code}})()`, {
+			document: template.content,
+			console,
+			FormData,
+		});
+		expect(button.disabled).toBe(false);
+		button.click();
+		expect(reload).toHaveBeenCalledExactlyOnceWith(source);
+		reload.mockRestore();
+	});
+
 	it('ends the demo with a live early-restoration iframe, without an extra behavior-module example', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(

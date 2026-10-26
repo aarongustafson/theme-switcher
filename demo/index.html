@@ -213,13 +213,16 @@
 					<p>
 						CSS masks add decorative icons. The text still names
 						each radio. Add <code>icon-only</code> to hide that text
-						visually, not from assistive technology.
+						visually, not from assistive technology. The icon-only
+						example also uses the <code>hide-legend</code> CSS class
+						from the README to hide its legend visually while
+						keeping the group named.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher class="icons"
   label="Icons and text"&gt;
 &lt;/theme-switcher&gt;
-&lt;theme-switcher class="icons" icon-only
+&lt;theme-switcher class="icons hide-legend" icon-only
   label="Icon-only appearance"&gt;
 &lt;/theme-switcher&gt;
 
@@ -243,7 +246,7 @@
 							></theme-switcher>
 							<theme-switcher
 								id="icon-only"
-								class="icons"
+								class="icons hide-legend"
 								icon-only
 								label="Icon-only appearance"
 								storage-key="theme-switcher-demo"
@@ -396,9 +399,18 @@ control.addEventListener(
 &lt;/theme-switcher&gt;</code></pre>
 						<div class="demo">
 							<iframe
+								id="cookie-demo"
 								src="./cookie.html"
 								title="Theme preference saved to localStorage and a cookie"
 							></iframe>
+							<button
+								type="button"
+								id="refresh-cookie-demo"
+								aria-controls="cookie-demo"
+								disabled
+							>
+								Refresh cookie example
+							</button>
 						</div>
 					</div>
 				</div>
