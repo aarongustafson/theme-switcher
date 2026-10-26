@@ -166,6 +166,12 @@ describe('package contracts', () => {
 		expect(rule).not.toMatch(/display:\s*none|visibility:\s*hidden/);
 		const readme = readFileSync(new URL('README.md', root), 'utf8');
 		expect(readme.replace(/\s+/g, '')).toContain(rule.replace(/\s+/g, ''));
+		const example = control.closest('.demo-section');
+		expect(
+			example.querySelector('pre code').textContent.replace(/\s+/g, ''),
+		).toContain(rule.replace(/\s+/g, ''));
+		expect(example.querySelector('p').textContent).toContain('author CSS');
+		expect(readme).toContain('not a built-in component option');
 	});
 
 	it('provides a working refresh button below the cookie iframe', async () => {

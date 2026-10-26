@@ -416,7 +416,8 @@ visual context, sufficient contrast, and a clear selected state when you restyle
 
 If the surrounding content already makes the control’s purpose clear, you can
 hide the legend visually while keeping its text as the radio group’s accessible
-name. Add a class and this CSS:
+name. `hide-legend` is an author-defined class, not a built-in component option.
+It only has an effect when you supply the CSS below:
 
 ```html
 <theme-switcher class="hide-legend" label="Color theme"></theme-switcher>

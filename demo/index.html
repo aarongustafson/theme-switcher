@@ -213,10 +213,11 @@
 					<p>
 						CSS masks add decorative icons. The text still names
 						each radio. Add <code>icon-only</code> to hide that text
-						visually, not from assistive technology. The icon-only
-						example also uses the <code>hide-legend</code> CSS class
-						from the README to hide its legend visually while
-						keeping the group named.
+						visually, not from assistive technology. The
+						<code>hide-legend</code> class below is author CSS, not
+						a component attribute. This demo’s stylesheet defines it
+						using the rule shown here: the legend is visually
+						hidden, but still names the group.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher class="icons"
@@ -237,7 +238,19 @@
 .icons [data-value='dark'] {
   --theme-icon: url('./dark.svg');
 }
-/* Add system.svg and light.svg too. */</code></pre>
+/* Add system.svg and light.svg too. */
+
+theme-switcher.hide-legend legend {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}</code></pre>
 						<div class="demo">
 							<theme-switcher
 								class="icons"
