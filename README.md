@@ -231,6 +231,26 @@ Translate `label` too, or supply all your own labels:
 ></theme-switcher>
 ```
 
+Language and direction inherit from surrounding markup. With
+`<html lang="ar" dir="rtl">`, the component and its native controls use RTL
+without their own `dir` attribute. You can also scope language and direction to
+a wrapper, or set them directly on the component to override its context:
+
+```html
+<div lang="ar" dir="rtl">
+  <theme-switcher
+    label="مظهر الموقع"
+    system-label="النظام"
+    light-label="فاتح"
+    dark-label="داكن"
+  ></theme-switcher>
+</div>
+```
+
+Setting `lang` identifies the language; it doesn’t translate the labels or set
+the text direction for you. Supply the translated labels and use `dir` where
+needed. The [Arabic demo](demo/index.html) also adds the decorative CSS icons.
+
 ### Extra themes
 
 Include the three standard values and add your own:

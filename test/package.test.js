@@ -148,6 +148,28 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
+	it('demonstrates Arabic icon labels with inherited language and direction', () => {
+		const template = document.createElement('template');
+		template.innerHTML = readFileSync(
+			new URL('demo/index.html', root),
+			'utf8',
+		);
+		const control = template.content.querySelector('#arabic');
+		expect(control).not.toBeNull();
+		expect(control.parentElement.lang).toBe('ar');
+		expect(control.parentElement.dir).toBe('rtl');
+		expect(control.hasAttribute('dir')).toBe(false);
+		expect(control.classList.contains('icons')).toBe(true);
+		expect(control.getAttribute('label')).toBe('مظهر الموقع');
+		expect(
+			['system-label', 'light-label', 'dark-label'].map((name) =>
+				control.getAttribute(name),
+			),
+		).toEqual(['النظام', 'فاتح', 'داكن']);
+		const readme = readFileSync(new URL('README.md', root), 'utf8');
+		expect(readme).toContain('<html lang="ar" dir="rtl">');
+	});
+
 	it('documents the same visually hidden legend CSS used by the icon-only demo', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(

@@ -123,6 +123,56 @@ const tests = [
 		},
 	],
 	[
+		'Direction inherits from ancestors and html, with an explicit override',
+		async () => {
+			const control = await setup();
+			const wrapper = document.createElement('div');
+			wrapper.lang = 'ar';
+			wrapper.dir = 'rtl';
+			fixture.append(wrapper);
+			wrapper.append(control);
+			control.style.inlineSize = '30rem';
+			await control.ready;
+			const previousDirection =
+				document.documentElement.getAttribute('dir');
+			const system = control.querySelector('[data-value="system"]');
+			const dark = control.querySelector('[data-value="dark"]');
+			try {
+				assert(
+					!control.hasAttribute('dir') &&
+						getComputedStyle(control).direction === 'rtl',
+					'The control did not inherit ancestor direction.',
+				);
+				assert(
+					system.getBoundingClientRect().left >
+						dark.getBoundingClientRect().left,
+					'RTL did not reverse the visual segment order.',
+				);
+				wrapper.removeAttribute('dir');
+				document.documentElement.dir = 'rtl';
+				assert(
+					getComputedStyle(control).direction === 'rtl',
+					'The control did not inherit html direction.',
+				);
+				control.dir = 'ltr';
+				assert(
+					getComputedStyle(control).direction === 'ltr' &&
+						system.getBoundingClientRect().left <
+							dark.getBoundingClientRect().left,
+					'An explicit direction did not override the document.',
+				);
+			} finally {
+				if (previousDirection === null)
+					document.documentElement.removeAttribute('dir');
+				else
+					document.documentElement.setAttribute(
+						'dir',
+						previousDirection,
+					);
+			}
+		},
+	],
+	[
 		'Translated labels retain the live selection after regeneration',
 		async () => {
 			const control = await setup();

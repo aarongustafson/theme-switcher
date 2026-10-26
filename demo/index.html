@@ -279,7 +279,11 @@ theme-switcher.hide-legend legend {
 						Supply the group label and the three choice labels. With
 						authored markup or custom choices, write your labels
 						there instead. Logical CSS properties also support
-						right-to-left layouts.
+						right-to-left layouts. The Arabic example uses the same
+						decorative icons as above and inherits its language and
+						direction from a wrapper. Setting
+						<code>dir="rtl"</code> on <code>html</code> works too;
+						you don’t need to repeat it on the component.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher lang="fr"
@@ -289,9 +293,14 @@ theme-switcher.hide-legend legend {
   dark-label="Sombre"&gt;
 &lt;/theme-switcher&gt;
 
-&lt;theme-switcher dir="rtl"
-  label="Right-to-left layout"&gt;
-&lt;/theme-switcher&gt;</code></pre>
+&lt;div lang="ar" dir="rtl"&gt;
+  &lt;theme-switcher class="icons"
+    label="مظهر الموقع"
+    system-label="النظام"
+    light-label="فاتح"
+    dark-label="داكن"&gt;
+  &lt;/theme-switcher&gt;
+&lt;/div&gt;</code></pre>
 						<div class="demo">
 							<theme-switcher
 								lang="fr"
@@ -301,11 +310,17 @@ theme-switcher.hide-legend legend {
 								dark-label="Sombre"
 								storage-key="theme-switcher-demo"
 							></theme-switcher>
-							<theme-switcher
-								dir="rtl"
-								label="Right-to-left layout"
-								storage-key="theme-switcher-demo"
-							></theme-switcher>
+							<div lang="ar" dir="rtl">
+								<theme-switcher
+									id="arabic"
+									class="icons"
+									label="مظهر الموقع"
+									system-label="النظام"
+									light-label="فاتح"
+									dark-label="داكن"
+									storage-key="theme-switcher-demo"
+								></theme-switcher>
+							</div>
 						</div>
 					</div>
 				</div>
