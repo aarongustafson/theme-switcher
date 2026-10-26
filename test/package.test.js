@@ -190,6 +190,14 @@ describe('package contracts', () => {
 		).not.toBeNull();
 	});
 
+	it('uses HighlightText for the selected icon in forced-colors mode', () => {
+		const css = readFileSync(new URL('demo/styles.css', root), 'utf8');
+		const selectedIcon = css.match(
+			/\.icons \[data-selected\]::before \{[^}]+\}/,
+		)?.[0];
+		expect(selectedIcon).toContain('background: HighlightText;');
+	});
+
 	it('demonstrates Arabic icon labels with inherited language and direction', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(

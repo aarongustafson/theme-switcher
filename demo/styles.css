@@ -174,7 +174,7 @@ theme-switcher.hide-legend legend {
 	}
 
 	.icons [data-selected]::before {
-		background: Highlight;
+		background: HighlightText;
 	}
 }
 

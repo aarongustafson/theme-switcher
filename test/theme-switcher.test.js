@@ -697,6 +697,195 @@ describe('theme-switcher', () => {
 		expect(document.documentElement.dataset.theme).toBe('light');
 	});
 
+	it('reconciles relabeling snapshots with newer synchronized preferences', async () => {
+		const first = await connect();
+		const second = await connect();
+		first.value = 'dark';
+		second.darkLabel = 'Night';
+		first.value = 'light';
+		await second.ready;
+		expect(first.value).toBe('light');
+		expect(second.value).toBe('light');
+		expect(document.documentElement.dataset.theme).toBe('light');
+		expect(localStorage.getItem('theme-switcher')).toBe('light');
+	});
+
+	it('preserves explicit queued API values across relabeling and synchronization', async () => {
+		const first = await connect();
+		const second = await connect();
+		first.value = 'dark';
+		second.darkLabel = 'Night';
+		second.value = 'light';
+		second.label = 'Appearance';
+		first.value = 'dark';
+		await second.ready;
+		expect(first.value).toBe('light');
+		expect(second.value).toBe('light');
+	});
+
+	it('upgrades pre-definition name and label properties before assigning defaults', async () => {
+		const control = document.createElement('theme-switcher');
+		Object.defineProperties(control, {
+			name: {
+				value: 'site-appearance',
+				writable: true,
+				configurable: true,
+			},
+			label: {
+				value: 'Thème du site',
+				writable: true,
+				configurable: true,
+			},
+		});
+		await connect(control);
+		expect(control.name).toBe('site-appearance');
+		expect(control.label).toBe('Thème du site');
+		expect(control.querySelector('input').name).toBe('site-appearance');
+		expect(control.querySelector('legend').textContent).toBe(
+			'Thème du site',
+		);
+	});
+
+	it('applies non-composed form resets from a shadow tree to the page and peers', async () => {
+		const host = document.createElement('div');
+		document.body.append(host);
+		const root = host.attachShadow({ mode: 'open' });
+		const form = document.createElement('form');
+		root.append(form);
+		const control = await connect(authored(), form);
+		const peer = await connect();
+		control.value = 'dark';
+		form.reset();
+		await Promise.resolve();
+		expect(control.value).toBe('system');
+		expect(peer.value).toBe('system');
+		expect(document.documentElement.dataset.theme).toBe('system');
+		expect(localStorage.getItem('theme-switcher')).toBe('system');
+	});
+
+	it.each([false, true])(
+		'joins a temporary page preference with an explicit storage key (cookie %s)',
+		async (cookie) => {
+			const first = await connect();
+			first.value = 'dark';
+			document.cookie = 'theme-switcher=dark; Path=/';
+			const temporary = document.createElement('theme-switcher');
+			temporary.storage = 'none';
+			await connect(temporary);
+			temporary.value = 'light';
+			const newcomer = document.createElement('theme-switcher');
+			newcomer.storageKey = 'theme-switcher';
+			newcomer.cookie = cookie;
+			await connect(newcomer);
+			window.dispatchEvent(new Event('focus'));
+			expect(newcomer.value).toBe('light');
+			expect(first.value).toBe('light');
+			expect(temporary.value).toBe('light');
+			expect(document.documentElement.dataset.theme).toBe('light');
+			expect(localStorage.getItem('theme-switcher')).toBe('dark');
+			expect(document.cookie).toContain('theme-switcher=dark');
+		},
+	);
+
+	it('queues a newly configured theme without selecting against the old fieldset', async () => {
+		const control = await connect();
+		control.configure({
+			name: 'palette',
+			label: 'Palette',
+			choices: [...themesForTest(), { value: 'sepia', label: 'Sepia' }],
+		});
+		expect(() => {
+			control.value = 'sepia';
+		}).not.toThrow();
+		await control.ready;
+		expect(control.value).toBe('sepia');
+		expect(document.documentElement.dataset.theme).toBe('sepia');
+		expect(localStorage.getItem('theme-switcher')).toBe('sepia');
+	});
+
+	it('validates pending API values only after preparing the new configuration', async () => {
+		const control = await connect();
+		control.configure({
+			name: 'palette',
+			label: 'Palette',
+			choices: themesForTest(),
+		});
+		expect(() => {
+			control.value = 'missing';
+		}).not.toThrow();
+		await expect(control.ready).rejects.toThrow(
+			/Unsupported theme: missing/,
+		);
+		expect(document.documentElement.dataset.theme).toBe('system');
+		control.configure({
+			name: 'palette',
+			label: 'Palette',
+			choices: [...themesForTest(), { value: 'sepia', label: 'Sepia' }],
+		});
+		expect(() => {
+			control.value = 'sepia';
+		}).not.toThrow();
+		await control.ready;
+		expect(control.value).toBe('sepia');
+	});
+
+	it('keeps replacement groups generated after identical configure calls', async () => {
+		const control = await connect();
+		const config = {
+			name: 'palette',
+			label: 'Palette',
+			value: 'dark',
+			choices: themesForTest(),
+		};
+		control.configure(config);
+		await control.ready;
+		const previousGroup = control.querySelector('fieldset');
+		control.configure(config);
+		await control.ready;
+		expect(control.querySelector('fieldset')).not.toBe(previousGroup);
+		control.setAttribute('value', 'light');
+		expect(control.value).toBe('light');
+		expect(document.documentElement.dataset.theme).toBe('light');
+	});
+
+	it('preserves an active custom theme when an unsupported peer connects or regenerates', async () => {
+		const custom = document.createElement('theme-switcher');
+		custom.configure({
+			name: 'palette',
+			label: 'Palette',
+			choices: [...themesForTest(), { value: 'sepia', label: 'Sepia' }],
+		});
+		await connect(custom);
+		custom.value = 'sepia';
+		const newcomer = document.createElement('theme-switcher');
+		const error = vi.fn();
+		newcomer.addEventListener('theme-switcher:error', error);
+		await connect(newcomer);
+		expect(newcomer.value).toBeNull();
+		expect(newcomer.resolvedTheme).toBe('sepia');
+		expect(newcomer.state).toBe('ready');
+		expect(
+			error.mock.calls.some(
+				([event]) => event.detail.phase === 'synchronization',
+			),
+		).toBe(true);
+		newcomer.darkLabel = 'Night';
+		await newcomer.ready;
+		expect(newcomer.value).toBeNull();
+		expect(document.documentElement.dataset.theme).toBe('sepia');
+		newcomer.storageKey = 'unused-theme';
+		await newcomer.ready;
+		expect(document.documentElement.dataset.theme).toBe('sepia');
+		newcomer.remove();
+		await connect(newcomer);
+		expect(newcomer.value).toBeNull();
+		expect(custom.value).toBe('sepia');
+		expect(document.documentElement.dataset.theme).toBe('sepia');
+		expect(localStorage.getItem('theme-switcher')).toBe('sepia');
+		newcomer.value = 'light';
+		expect(custom.value).toBe('light');
+	});
+
 	it('reports malformed cookie encoding without breaking initialization', async () => {
 		document.cookie = 'theme-switcher=%broken; Path=/';
 		const control = document.createElement('theme-switcher');

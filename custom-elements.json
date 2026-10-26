@@ -71,7 +71,7 @@
 							"kind": "field",
 							"name": "value",
 							"type": { "text": "string | null" },
-							"description": "Current radio selection. Set a nonempty offered string to apply and persist a preference. Does not change the reset default. Null before setup or if a peer selects a theme absent from this control; assigning null throws."
+							"description": "Current radio selection. Set a nonempty offered string to apply and persist a preference without changing the reset default. While pending, values are queued and validated against the prepared choices; ready rejects unsupported queued values. Unsupported ready-state assignments throw. Null before setup or when this control does not offer the active page theme, including on connection; assigning null throws."
 						},
 						{
 							"kind": "field",

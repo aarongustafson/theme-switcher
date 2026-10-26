@@ -189,9 +189,10 @@ are text, not HTML. Set `color-scheme` and the palette for custom themes in your
 CSS; `resolvedTheme` returns the custom value without guessing whether it’s light
 or dark.
 
-Give controls on the same page the same available themes. If one selects a theme
-another doesn’t offer, that peer clears its selection and reports a
-`synchronization` error rather than displaying the wrong choice.
+Give controls on the same page the same available themes. A control that doesn’t
+offer the current page theme has no radio selected, keeps that theme in
+`resolvedTheme`, and reports a nonfatal `synchronization` error. Connecting or
+relabeling that control doesn’t replace the page’s preference.
 
 ### Changing the preference from JavaScript
 
@@ -203,10 +204,15 @@ switcher.value = 'dark';
 console.log(switcher.resolvedTheme); // "dark"
 ```
 
-The setter accepts a nonempty offered value; `null` and unknown values throw.
+The setter accepts a nonempty offered value; `null` and empty values throw.
 It applies the theme, saves it when persistence is enabled, and synchronizes
 other connected controls. It doesn’t change the radio’s form-reset default or
 emit the base component’s user-interaction events.
+
+Before setup finishes, assignments are queued rather than applied to the old
+radios. This lets you call `configure()` and then set `.value` to a newly added
+theme. Await `ready` to confirm it was applied: unsupported queued values reject
+that promise. Once ready, an unsupported value throws from the setter.
 
 `ready` resolves after enhancement and theme setup. Read it again after
 reconfiguration. Ordinary markup changes are observed automatically; inherited
@@ -270,8 +276,10 @@ cookie changes also update localStorage; deleting the cookie selects and saves
 System. Unsupported saved values and blocked storage produce
 diagnostics; blocked storage doesn’t prevent theme changes.
 
-Changing `storage-key` or `cookie`, or turning persistence back on, reads the saved preference
-for that key. Without a saved value, the current selection is retained.
+Changing `storage-key` or `cookie` on an initialized control, or turning
+persistence back on, reads the saved preference for that key. Without a saved
+value, the current selection is retained. Newly connected controls join the
+current page preference instead of restoring an older saved value over it.
 
 Disconnecting a control removes its media-query, storage, reset, and synchronization
 listeners. It doesn’t revert the page or delete the saved preference. Reconnecting
@@ -370,6 +378,9 @@ when you need a predictable field name. Reset restores the authored checked
 default (or generated `value` default), then applies and saves that preference.
 If no radio is checked after reset, the component selects System. A canceled
 reset leaves the theme alone.
+
+Reset also works when the form and controls share a shadow tree, including radios
+associated with a form through their `form` attribute.
 
 The [form demo](https://aarongustafson.github.io/theme-switcher/demo/) shows
 submission and reset alongside a no-module fallback.

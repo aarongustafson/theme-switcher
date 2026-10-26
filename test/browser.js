@@ -361,6 +361,217 @@ const tests = [
 			);
 		},
 	],
+	[
+		'Regeneration preserves newer sync and queued API values',
+		async () => {
+			const first = await setup();
+			const second = document.createElement('theme-switcher');
+			second.storageKey = key;
+			fixture.append(second);
+			await second.ready;
+			first.value = 'dark';
+			second.darkLabel = 'Night';
+			first.value = 'light';
+			await second.ready;
+			assert(
+				first.value === 'light' && second.value === 'light',
+				'Relabeling restored a stale preference.',
+			);
+			const config = {
+				name: 'palette',
+				label: 'Palette',
+				choices: ['system', 'light', 'dark', 'sepia'].map((value) => ({
+					value,
+					label: value,
+				})),
+			};
+			second.configure(config);
+			second.value = 'sepia';
+			second.label = 'Updated palette';
+			first.value = 'dark';
+			await second.ready;
+			assert(
+				second.value === 'sepia' && first.value === null,
+				'A queued API preference was discarded.',
+			);
+			second.configure(config);
+			await second.ready;
+			second.configure(config);
+			await second.ready;
+			second.setAttribute('value', 'light');
+			assert(
+				document.documentElement.dataset.theme === 'light' &&
+					first.value === 'light',
+				'An identical configure call lost generated behavior.',
+			);
+		},
+	],
+	[
+		'Properties assigned before custom-element definition survive upgrade',
+		async () => {
+			await setup();
+			fixture.replaceChildren();
+			const tag = 'theme-switcher-upgrade-test';
+			const control = document.createElement(tag);
+			control.name = 'site-appearance';
+			control.label = 'Thème du site';
+			control.storage = 'none';
+			control.value = 'dark';
+			fixture.append(control);
+			customElements.define(
+				tag,
+				class extends customElements.get('theme-switcher') {},
+			);
+			await control.ready;
+			assert(
+				control.name === 'site-appearance' &&
+					control.querySelector('input').name === 'site-appearance',
+				'Upgrade discarded the authored name.',
+			);
+			assert(
+				control.label === 'Thème du site' &&
+					control.querySelector('legend').textContent ===
+						'Thème du site',
+				'Upgrade discarded the localized group label.',
+			);
+			assert(
+				control.value === 'dark',
+				'Upgrade discarded a queued preference.',
+			);
+		},
+	],
+	[
+		'Native resets work for internal and externally associated shadow-tree forms',
+		async () => {
+			const peer = await setup();
+			const host = document.createElement('div');
+			fixture.append(host);
+			const root = host.attachShadow({ mode: 'closed' });
+			const form = document.createElement('form');
+			form.id = 'shadow-theme-form';
+			const control = document.createElement('theme-switcher');
+			control.storageKey = key;
+			control.innerHTML = radios;
+			root.append(form);
+			form.append(control);
+			await control.ready;
+			control.value = 'dark';
+			form.addEventListener('reset', (event) => event.preventDefault(), {
+				once: true,
+			});
+			form.reset();
+			await Promise.resolve();
+			assert(
+				control.value === 'dark' && peer.value === 'dark',
+				'A canceled shadow-tree reset changed the preference.',
+			);
+			form.reset();
+			await Promise.resolve();
+			assert(
+				control.value === 'system' &&
+					peer.value === 'system' &&
+					localStorage.getItem(key) === 'system',
+				'The native non-composed reset did not apply outside the shadow tree.',
+			);
+			for (const input of control.querySelectorAll('input'))
+				input.setAttribute('form', form.id);
+			root.append(control);
+			await control.ready;
+			control.value = 'light';
+			assert(
+				new FormData(form).get('appearance') === 'light',
+				'External shadow-tree form association failed.',
+			);
+			form.reset();
+			await Promise.resolve();
+			assert(
+				control.value === 'system' &&
+					document.documentElement.dataset.theme === 'system',
+				'An externally associated reset did not update the page.',
+			);
+		},
+	],
+	[
+		'New controls preserve temporary and unsupported custom page preferences',
+		async () => {
+			const first = await setup();
+			first.value = 'dark';
+			document.cookie = `${key}=dark; Path=/`;
+			const temporary = document.createElement('theme-switcher');
+			temporary.storage = 'none';
+			fixture.append(temporary);
+			await temporary.ready;
+			temporary.value = 'light';
+			const newcomer = document.createElement('theme-switcher');
+			newcomer.storageKey = key;
+			newcomer.cookie = true;
+			fixture.append(newcomer);
+			await newcomer.ready;
+			window.dispatchEvent(new Event('focus'));
+			assert(
+				newcomer.value === 'light' &&
+					first.value === 'light' &&
+					localStorage.getItem(key) === 'dark',
+				'Connecting a stored control replaced or persisted the temporary preference.',
+			);
+			first.configure({
+				name: 'palette',
+				label: 'Palette',
+				value: 'sepia',
+				choices: ['system', 'light', 'dark', 'sepia'].map((value) => ({
+					value,
+					label: value,
+				})),
+			});
+			await first.ready;
+			first.value = 'sepia';
+			const standard = document.createElement('theme-switcher');
+			standard.storageKey = key;
+			fixture.append(standard);
+			await standard.ready;
+			assert(
+				standard.value === null &&
+					standard.resolvedTheme === 'sepia' &&
+					first.value === 'sepia',
+				'An unsupported new peer replaced the active custom theme.',
+			);
+			standard.darkLabel = 'Night';
+			await standard.ready;
+			assert(
+				standard.value === null &&
+					document.documentElement.dataset.theme === 'sepia',
+				'Regeneration replaced an unsupported active theme.',
+			);
+		},
+	],
+	[
+		'Selected decorative icons use a contrasting system foreground',
+		async () => {
+			const control = await setup();
+			control.classList.add('icons');
+			control.value = 'dark';
+			const selected = control.querySelector('[data-value="dark"]');
+			const probe = document.createElement('span');
+			probe.style.cssText =
+				'background: HighlightText; forced-color-adjust: none;';
+			fixture.append(probe);
+			const icon = getComputedStyle(selected, '::before');
+			assert(
+				icon.backgroundColor ===
+					getComputedStyle(probe).backgroundColor,
+				'The selected icon is not HighlightText.',
+			);
+			assert(
+				icon.backgroundColor !==
+					getComputedStyle(selected).backgroundColor,
+				'The selected icon disappears into its background.',
+			);
+			assert(
+				icon.maskImage.includes('dark.svg'),
+				'The selected icon has no identifying symbol.',
+			);
+		},
+	],
 ];
 
 window.browserResults = [];

@@ -40,7 +40,10 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 	static readonly observedAttributes: string[];
 	/** Current selection; null before setup or if this control lacks the page theme. */
 	get value(): string | null;
-	/** Apply and save an offered theme. Does not change the native reset default. */
+	/** Apply and save an offered theme without changing the reset default.
+	 * While pending, queue it for validation against the prepared choices; ready
+	 * rejects an unsupported queued value. Ready-state assignments throw instead.
+	 */
 	set value(value: string);
 	/** System resolves to light/dark; custom theme values pass through unchanged. */
 	readonly resolvedTheme: string | null;

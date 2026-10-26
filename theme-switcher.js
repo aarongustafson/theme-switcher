@@ -60,6 +60,8 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		const start = () => {
 			this._themePreparing = true;
 			for (const property of [
+				'name',
+				'label',
 				'storageKey',
 				'storage',
 				'cookie',
@@ -160,7 +162,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 				},
 				{ signal },
 			);
-			this.ownerDocument.addEventListener(
+			this.getRootNode().addEventListener(
 				'reset',
 				(event) => {
 					if (
@@ -203,6 +205,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		this._themeStarted = false;
 		this._themeSelection = null;
 		this._themeResolved = null;
+		this._themeReloadStorage = false;
 		super.disconnectedCallback();
 	}
 
@@ -212,7 +215,11 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			this._themeDefaultChoices = false;
 		if (labelAttributes.includes(name)) {
 			if (this._themeDefaultChoices && !this._themeAuthored()) {
-				this._themePendingValue = this.value ?? this._themePendingValue;
+				if (!this._themePersistPendingValue)
+					this._themePendingValue =
+						this.value ??
+						this._themeSelection ??
+						this._themePendingValue;
 				this._themeSetChoices();
 			}
 			return;
@@ -223,7 +230,8 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			)
 		) {
 			if (name !== 'cookie-max-age')
-				this._themeReloadStorage = this.storage !== 'none';
+				this._themeReloadStorage =
+					this._themeSelection !== null && this.storage !== 'none';
 			if (this._themeStarted && super.state === 'ready')
 				this._themeInitialize();
 			return;
@@ -235,7 +243,11 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			this._themeSelection !== null &&
 			!this._themeAuthored()
 		) {
-			this._themePendingValue = this.value ?? this._themePendingValue;
+			if (!this._themePersistPendingValue)
+				this._themePendingValue =
+					this.value ??
+					this._themeSelection ??
+					this._themePendingValue;
 		}
 		if (
 			['choices', 'name', 'label'].includes(name) &&
@@ -257,15 +269,14 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		return super.value;
 	}
 	set value(value) {
-		if (this._themeError) throw this._themeError;
 		if (typeof value !== 'string' || !value.trim())
 			throw new TypeError('A theme value must be a nonempty string.');
 		if (!this._themeStarted || super.state !== 'ready') {
 			this._themePendingValue = value;
 			this._themePersistPendingValue = true;
-			super.value = value;
 			return;
 		}
+		if (this._themeError) throw this._themeError;
 		if (!this._themeSupports(value))
 			throw new RangeError(`Unsupported theme: ${value}`);
 		this._themeCommit(value, 'api', true);
@@ -351,6 +362,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		this._themeConfiguring = true;
 		try {
 			super.configure(configuration);
+			this._themeGenerating = true;
 		} finally {
 			this._themeConfiguring = false;
 		}
@@ -433,39 +445,72 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			const active = [...peers].find(
 				(peer) => peer !== this,
 			)?._themeSelection;
+			const joiningPage = this._themeSelection === null && active != null;
 			const saved =
-				this._themeSelection === null || this._themeReloadStorage
+				!joiningPage &&
+				(this._themeSelection === null || this._themeReloadStorage)
 					? this._themeRead()
 					: undefined;
+			if (
+				joiningPage &&
+				this.storage !== 'none' &&
+				this.cookie !== null
+			) {
+				try {
+					this._themeCookieSnapshot = this._themeReadCookie();
+				} catch (error) {
+					this._themeReport(error, 'storage');
+				}
+			}
 			let value = this._themePendingValue;
 			const persistPendingValue = this._themePersistPendingValue;
+			let sharedPreference = value !== undefined && !persistPendingValue;
 			this._themePendingValue = undefined;
 			this._themePersistPendingValue = false;
-			if (value !== undefined && !this._themeSupports(value))
+			if (
+				value !== undefined &&
+				!sharedPreference &&
+				!this._themeSupports(value)
+			)
 				throw new RangeError(`Unsupported theme: ${value}`);
 			if (value === undefined) {
-				value = this._themeReloadStorage
-					? (saved ?? super.value)
-					: this._themeSelection !== null
-						? super.value
-						: (active ?? saved);
-				this._themeReloadStorage = false;
-				if (!this._themeSupports(value))
+				sharedPreference = joiningPage;
+				value = joiningPage
+					? active
+					: this._themeReloadStorage
+						? (saved ?? super.value ?? this._themeSelection)
+						: this._themeSelection !== null
+							? (super.value ?? this._themeSelection)
+							: saved;
+				if (
+					this._themeSelection !== null &&
+					value === this._themeSelection
+				)
+					sharedPreference = true;
+				if (!sharedPreference && !this._themeSupports(value))
 					value =
 						this.ownerDocument.documentElement.getAttribute(
 							'data-theme',
 						);
-				if (!this._themeSupports(value))
+				if (!sharedPreference && !this._themeSupports(value))
 					value = super.value ?? 'system';
-				if (!this._themeSupports(value)) value = 'system';
+				if (!sharedPreference && !this._themeSupports(value))
+					value = 'system';
 			}
+			this._themeReloadStorage = false;
 			peers.add(this);
 			this.setAttribute('data-multi-switch-state', super.state);
-			this._themeCommit(
-				value,
-				this._themeSelection === null ? 'initial' : 'configuration',
-				persistPendingValue || (this.cookie !== null && saved != null),
-			);
+			const source =
+				this._themeSelection === null ? 'initial' : 'configuration';
+			if (sharedPreference && !this._themeSupports(value))
+				this._themeUpdate(value, source);
+			else
+				this._themeCommit(
+					value,
+					source,
+					persistPendingValue ||
+						(this.cookie !== null && saved != null),
+				);
 			this.dispatchEvent(
 				new CustomEvent('theme-switcher:ready', {
 					bubbles: true,
@@ -621,6 +666,11 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 	}
 
 	_themeUpdate(value, source) {
+		if (
+			this._themePendingValue !== undefined &&
+			!this._themePersistPendingValue
+		)
+			this._themePendingValue = value;
 		const previousValue = this._themeSelection;
 		const previousResolvedTheme = this._themeResolved;
 		const resolvedTheme =
