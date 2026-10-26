@@ -148,6 +148,73 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
+	it('ends the demo with a live early-restoration iframe, without an extra behavior-module example', () => {
+		const template = document.createElement('template');
+		template.innerHTML = readFileSync(
+			new URL('demo/index.html', root),
+			'utf8',
+		);
+		expect(
+			template.content.querySelector('theme-switcher[script]'),
+		).toBeNull();
+		expect(
+			template.content.querySelector(
+				'.demo-section:last-child iframe[src="./early.html"]',
+			),
+		).not.toBeNull();
+		expect(template.content.querySelector('#demo-errors')).not.toBeNull();
+	});
+
+	it.each(['dark', 'system', 'unknown', null, new Error('Blocked')])(
+		'runs the iframe head restoration before CSS and component registration for %s',
+		(saved) => {
+			const template = document.createElement('template');
+			template.innerHTML = readFileSync(
+				new URL('demo/early.html', root),
+				'utf8',
+			);
+			const script = template.content.querySelector('script:not([type])');
+			const stylesheet = template.content.querySelector(
+				'link[rel="stylesheet"]',
+			);
+			const registration = template.content.querySelector(
+				'script[type="module"]',
+			);
+			const nodes = [
+				...template.content.querySelectorAll('script, link'),
+			];
+			expect(nodes.indexOf(script)).toBeLessThan(
+				nodes.indexOf(stylesheet),
+			);
+			expect(nodes.indexOf(stylesheet)).toBeLessThan(
+				nodes.indexOf(registration),
+			);
+			expect(registration.getAttribute('src')).toBe('../define.js');
+			const control = template.content.querySelector('theme-switcher');
+			const setAttribute = vi.fn();
+			const warn = vi.fn();
+			const getItem = vi.fn(() => {
+				if (saved instanceof Error) throw saved;
+				return saved;
+			});
+			runInNewContext(script.textContent, {
+				document: { documentElement: { setAttribute } },
+				localStorage: { getItem },
+				console: { warn },
+			});
+			expect(getItem).toHaveBeenCalledWith(
+				control.getAttribute('storage-key'),
+			);
+			if (saved === 'dark' || saved === 'system')
+				expect(setAttribute).toHaveBeenCalledWith('data-theme', saved);
+			else expect(setAttribute).not.toHaveBeenCalled();
+			if (saved instanceof Error) expect(warn).toHaveBeenCalled();
+			expect(
+				template.content.querySelector('a[href="./early.html"]'),
+			).not.toBeNull();
+		},
+	);
+
 	it('describes inherited behavior and every added observed attribute', () => {
 		const declaration = manifest.modules[0].declarations[0];
 		expect(declaration.superclass).toMatchObject({

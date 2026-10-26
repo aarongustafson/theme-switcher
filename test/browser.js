@@ -206,7 +206,7 @@ const tests = [
 			const control = await setup();
 			const output = document.createElement('output');
 			fixture.append(output);
-			control.script = '../demo/observe.js';
+			control.script = './observe.js';
 			await control.ready;
 			control.value = 'dark';
 			assert(

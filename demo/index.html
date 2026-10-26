@@ -402,47 +402,6 @@ control.addEventListener(
 						</div>
 					</div>
 				</div>
-				<div class="demo-section">
-					<h3>Load an optional behavior module</h3>
-					<p>
-						Theme behavior is already built in; you don’t need
-						<code>script</code> for it. Use this inherited option
-						for extra behavior. The component waits for your
-						module’s <code>initialize()</code> before finishing
-						setup. This module listens for theme events and returns
-						cleanup.
-					</p>
-					<div class="code-demo-pair">
-						<pre><code>&lt;theme-switcher
-  script="./observe.js"
-  label="Module-connected preference"&gt;
-&lt;/theme-switcher&gt;
-
-// observe.js
-export function initialize(control, { signal }) {
-  const output =
-    control.parentElement.querySelector('output');
-  control.addEventListener(
-    'theme-switcher:change', ({ detail }) =&gt; {
-      output.textContent =
-        `${detail.value} → ${detail.resolvedTheme}`;
-    }, { signal });
-  return () =&gt; {
-    output.textContent = 'Listener disconnected.';
-  };
-}</code></pre>
-						<div class="demo">
-							<theme-switcher
-								script="./observe.js"
-								label="Module-connected preference"
-								storage-key="theme-switcher-demo"
-							></theme-switcher>
-							<output aria-live="polite"
-								>Loading the optional module.</output
-							>
-						</div>
-					</div>
-				</div>
 			</section>
 			<section>
 				<h2>Plan for loading and failure</h2>
@@ -508,12 +467,14 @@ control.value = 'dark';</code></pre>
 						restore it before your stylesheets load. Match the
 						storage key and allowed themes to your control. The
 						component then picks up that preference when it’s ready.
+						Choose a theme in this frame, then use its reload link
+						to try restoring it. The frame uses its own storage key.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;script&gt;
   try {
     const theme = localStorage.getItem(
-      'theme-switcher-demo');
+      'theme-switcher-early-demo');
     if (['system', 'light', 'dark']
         .includes(theme)) {
       document.documentElement
@@ -524,20 +485,24 @@ control.value = 'dark';</code></pre>
       error);
   }
 &lt;/script&gt;
-&lt;link rel="stylesheet" href="site.css"&gt;</code></pre>
+&lt;link rel="stylesheet" href="./styles.css"&gt;
+
+&lt;!-- In the body: --&gt;
+&lt;theme-switcher
+  storage-key="theme-switcher-early-demo"
+  label="Saved appearance"&gt;
+&lt;/theme-switcher&gt;</code></pre>
 						<div class="demo">
-							<p>
-								This page doesn’t run that early script, so you
-								can see the normal loading path. The script
-								belongs in your document’s head, before CSS—not
-								in a control’s initializer.
-							</p>
-							<p id="demo-errors" role="status"></p>
+							<iframe
+								src="./early.html"
+								title="Saved theme restored in the head before styles load"
+							></iframe>
 						</div>
 					</div>
 				</div>
 			</section>
 		</main>
+		<p id="demo-errors" role="status"></p>
 		<footer>
 			<p>
 				Made with ❤️ by

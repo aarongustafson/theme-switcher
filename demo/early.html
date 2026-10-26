@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Early theme restoration</title>
+		<script>
+			try {
+				const theme = localStorage.getItem('theme-switcher-early-demo');
+				if (['system', 'light', 'dark'].includes(theme)) {
+					document.documentElement.setAttribute('data-theme', theme);
+				}
+			} catch (error) {
+				console.warn('Theme storage unavailable.', error);
+			}
+		</script>
+		<link rel="stylesheet" href="./styles.css" />
+		<script type="importmap">
+			{
+				"imports": {
+					"@aarongustafson/form-multi-switch": "../node_modules/@aarongustafson/form-multi-switch/index.js"
+				}
+			}
+		</script>
+		<script type="module" src="../define.js"></script>
+	</head>
+	<body>
+		<theme-switcher
+			storage-key="theme-switcher-early-demo"
+			label="Saved appearance"
+		></theme-switcher>
+		<p>
+			Choose a theme, then <a href="./early.html">reload this example</a>.
+			The script in the head restores your choice before the stylesheet
+			and component load.
+		</p>
+		<p>
+			This frame uses its own storage key, so your choice doesn’t change
+			the other demos.
+		</p>
+	</body>
+</html>
