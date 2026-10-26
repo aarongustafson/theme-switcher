@@ -148,6 +148,48 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
+	it('leads with generated controls and keeps authored forms as secondary reference', () => {
+		const readme = readFileSync(new URL('README.md', root), 'utf8');
+		expect(readme).toContain(
+			'](https://aarongustafson.github.io/theme-switcher/)',
+		);
+		expect(readme).toContain(
+			'](https://aarongustafson.github.io/theme-switcher/demo/)',
+		);
+		expect(readme).toContain('## Use the generated control');
+		expect(readme).toContain('## Authored radios and forms');
+		expect(readme.indexOf('## Use the generated control')).toBeLessThan(
+			readme.indexOf('## Authored radios and forms'),
+		);
+		expect(readme.indexOf('## Configuration')).toBeLessThan(
+			readme.indexOf('## Authored radios and forms'),
+		);
+		const template = document.createElement('template');
+		template.innerHTML = readFileSync(
+			new URL('demo/index.html', root),
+			'utf8',
+		);
+		const controls = template.content.querySelectorAll('theme-switcher');
+		expect(controls[0].id).toBe('default');
+		for (const id of [
+			'default',
+			'temporary',
+			'use-system',
+			'appearance-form',
+		]) {
+			expect(template.content.querySelector(`#${id}`), id).not.toBeNull();
+		}
+		const form = template.content.querySelector('#appearance-form');
+		expect(
+			form.closest('details')?.querySelector('summary').textContent,
+		).toContain('Authored radios and form submission');
+		expect(
+			template.content.querySelector(
+				'a[href="https://github.com/aarongustafson/form-multi-switch"]',
+			),
+		).not.toBeNull();
+	});
+
 	it('demonstrates Arabic icon labels with inherited language and direction', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(

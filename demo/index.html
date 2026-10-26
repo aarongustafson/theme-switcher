@@ -18,22 +18,15 @@
 		<header>
 			<h1>&lt;theme-switcher&gt;</h1>
 			<p>
-				Choose System, Light, or Dark using native radios. See the
+				A System, Light, and Dark picker built on
+				<a href="https://github.com/aarongustafson/form-multi-switch"
+					>&lt;form-multi-switch&gt;</a
+				>. See the
 				<a
 					href="https://github.com/aarongustafson/theme-switcher/blob/main/README.md"
 					>README</a
 				>
 				for installation and the API.
-			</p>
-			<p>
-				All controls on this page share its theme and use the demo-only
-				storage key <code>theme-switcher-demo</code>. The Sepia example
-				has its own document so it can use a different set of choices.
-			</p>
-			<p>
-				Use <kbd>Tab</kbd> to reach a group, arrow keys to move between
-				choices, and <kbd>Space</kbd> to select. Only System follows
-				changes to your device’s color preference.
 			</p>
 			<noscript>
 				<p>
@@ -44,16 +37,27 @@
 			</noscript>
 		</header>
 		<main>
+			<p>
+				All controls on this page share its theme and use the demo-only
+				storage key <code>theme-switcher-demo</code>, except the
+				temporary control, which doesn’t save changes. Framed examples
+				have their own page themes and storage settings.
+			</p>
+			<p>
+				Use <kbd>Tab</kbd> to reach a group, arrow keys to move between
+				choices, and <kbd>Space</kbd> to select. Only System follows
+				changes to your device’s color preference.
+			</p>
 			<section>
-				<h2>Start with three choices</h2>
+				<h2>Use the generated control</h2>
 				<div class="demo-section">
 					<h3>Configure the control with attributes</h3>
 					<p>
-						The component supplies a named radio group and its
-						default styles. It sets <code>data-theme</code> on
+						Set a label; the component generates the three radios
+						and their styles. It sets <code>data-theme</code> on
 						<code>&lt;html&gt;</code>; the page’s CSS supplies the
-						colors. An explicit choice stays put when your device
-						switches modes.
+						colors. Before JavaScript loads, this version has no
+						controls.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher
@@ -68,6 +72,10 @@
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
+}
+body {
+  background: Canvas;
+  color: CanvasText;
 }</code></pre>
 						<div class="demo">
 							<theme-switcher
@@ -89,18 +97,21 @@
 				</div>
 			</section>
 			<section>
-				<h2>Keep your markup and form behavior</h2>
-				<div class="demo-section">
-					<h3>Enhance an authored fieldset</h3>
-					<p>
-						The legend and labels name the controls, and the checked
-						radio establishes the reset default. These controls
-						still work without JavaScript. Conflicting host
-						configuration doesn’t replace authored choices, names,
-						labels, or values.
-					</p>
-					<div class="code-demo-pair">
-						<pre><code>&lt;form&gt;
+				<details>
+					<summary>Authored radios and form submission</summary>
+					<div class="demo-section">
+						<h3>Enhance an authored fieldset</h3>
+						<p>
+							The legend and labels name the controls, and the
+							checked radio sets the reset default. The browser
+							handles selection and form submission without
+							JavaScript; the component adds page-theme changes.
+							Authored markup takes precedence over the
+							component’s choice, name, label, and value
+							attributes.
+						</p>
+						<div class="code-demo-pair">
+							<pre><code>&lt;form&gt;
   &lt;theme-switcher
     storage-key="theme-switcher-demo"&gt;
     &lt;fieldset&gt;
@@ -119,66 +130,70 @@
   &lt;button&gt;Inspect FormData&lt;/button&gt;
   &lt;button type="reset"&gt;Reset&lt;/button&gt;
 &lt;/form&gt;</code></pre>
-						<div class="demo">
-							<form id="appearance-form">
-								<theme-switcher
-									id="authored"
-									storage-key="theme-switcher-demo"
-								>
-									<fieldset>
-										<legend>Reading appearance</legend>
-										<label
-											><input
-												type="radio"
-												name="appearance"
-												value="system"
-												checked
-											/>Use my device</label
-										>
-										<label
-											><input
-												type="radio"
-												name="appearance"
-												value="light"
-											/>Light</label
-										>
-										<label
-											><input
-												type="radio"
-												name="appearance"
-												value="dark"
-											/>Dark</label
-										>
-									</fieldset>
-								</theme-switcher>
+							<div class="demo">
+								<form id="appearance-form">
+									<theme-switcher
+										id="authored"
+										storage-key="theme-switcher-demo"
+									>
+										<fieldset>
+											<legend>Reading appearance</legend>
+											<label
+												><input
+													type="radio"
+													name="appearance"
+													value="system"
+													checked
+												/>Use my device</label
+											>
+											<label
+												><input
+													type="radio"
+													name="appearance"
+													value="light"
+												/>Light</label
+											>
+											<label
+												><input
+													type="radio"
+													name="appearance"
+													value="dark"
+												/>Dark</label
+											>
+										</fieldset>
+									</theme-switcher>
+									<p>
+										<button>Inspect FormData</button>
+										<button type="reset">Reset</button>
+									</p>
+									<output aria-live="polite"
+										>Submit to inspect the selected
+										preference.</output
+									>
+								</form>
 								<p>
-									<button>Inspect FormData</button>
-									<button type="reset">Reset</button>
+									<small
+										>Reset restores System, including the
+										page theme and saved preference.</small
+									>
 								</p>
-								<output aria-live="polite"
-									>Submit to inspect the selected
-									preference.</output
-								>
-							</form>
-							<p>
-								<small
-									>Reset restores System, including the page
-									theme and saved preference.</small
-								>
-							</p>
+							</div>
 						</div>
 					</div>
-				</div>
+				</details>
 			</section>
 			<section>
 				<h2>Make it fit your site</h2>
 				<div class="demo-section">
 					<h3>Restyle the segments</h3>
 					<p>
-						The same <code>--multi-switch-*</code> properties work
-						here as in <code>&lt;form-multi-switch&gt;</code>.
-						Default styles live in a cascade layer, so your CSS can
-						override them.
+						Use the
+						<a
+							href="https://github.com/aarongustafson/form-multi-switch#styling"
+							>base component’s
+							<code>--multi-switch-*</code> properties</a
+						>. Default styles live in a cascade layer, so your CSS
+						can override them.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher class="pill"
@@ -201,8 +216,8 @@
 							></theme-switcher>
 							<p>
 								<small
-									>The border joins remain connected,
-									including at narrow widths.</small
+									>Your CSS changes the control’s appearance,
+									not the page palette.</small
 								>
 							</p>
 						</div>
@@ -211,13 +226,12 @@
 				<div class="demo-section">
 					<h3>Add icons without losing the labels</h3>
 					<p>
-						CSS masks add decorative icons. The text still names
-						each radio. Add <code>icon-only</code> to hide that text
-						visually, not from assistive technology. The
+						CSS masks add decorative icons. Keep text to name each
+						radio; <code>icon-only</code> hides it visually, not
+						from assistive technology. The
 						<code>hide-legend</code> class below is author CSS, not
-						a component attribute. This demo’s stylesheet defines it
-						using the rule shown here: the legend is visually
-						hidden, but still names the group.
+						a component attribute. The rule below hides the legend
+						visually while keeping the group’s accessible name.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher class="icons"
@@ -276,14 +290,14 @@ theme-switcher.hide-legend legend {
 				<div class="demo-section">
 					<h3>Translate the labels</h3>
 					<p>
-						Supply the group label and the three choice labels. With
-						authored markup or custom choices, write your labels
-						there instead. Logical CSS properties also support
-						right-to-left layouts. The Arabic example uses the same
-						decorative icons as above and inherits its language and
-						direction from a wrapper. Setting
+						Supply translated group and choice labels; setting
+						<code>lang</code> alone doesn’t translate them. The
+						Arabic example inherits language and direction from its
+						wrapper and uses the decorative icons above. Setting
 						<code>dir="rtl"</code> on <code>html</code> works too;
-						you don’t need to repeat it on the component.
+						you don’t need to repeat it on the component. For custom
+						choices or authored radios, translate their labels
+						directly.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher lang="fr"
@@ -327,8 +341,8 @@ theme-switcher.hide-legend legend {
 				<div class="demo-section">
 					<h3>Add a reading palette</h3>
 					<p>
-						Custom choices include the three standard values. Your
-						CSS handles the extra palette and its
+						Include System, Light, and Dark when adding choices.
+						Your CSS handles the extra palette and its
 						<code>color-scheme</code>. This example runs in a
 						separate document: controls sharing a page should offer
 						the same themes.
@@ -403,15 +417,13 @@ control.addEventListener(
 				<div class="demo-section">
 					<h3>Back the preference with a cookie</h3>
 					<p>
-						LocalStorage works without configuration. Add
+						The component uses localStorage by default. Add
 						<code>cookie</code> to save the preference in both
-						places, so your server can use it too. A bare attribute
-						shares the storage key; a value gives the cookie a
-						separate name. On startup, a valid localStorage value
-						wins, with the cookie as a fallback.
-						<code>storage="none"</code> disables both. This isolated
-						example uses its own key so its cookie settings don’t
-						conflict with the other controls.
+						places so your server can read it. On startup, a valid
+						localStorage value wins, with the cookie as a fallback.
+						A bare attribute uses the storage key as the cookie
+						name; supply a value to name it separately.
+						<code>storage="none"</code> disables both stores.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher
@@ -448,10 +460,10 @@ control.addEventListener(
 				<div class="demo-section">
 					<h3>Keep a native fallback</h3>
 					<p>
-						This frame deliberately doesn’t load the component. The
-						radios remain usable, and the form still has a value to
-						submit. Disable JavaScript and reload the whole demo to
-						compare authored controls with generated ones.
+						This frame doesn’t load the component. The radios remain
+						usable, and the form still has a value to submit.
+						Disable JavaScript and reload the whole demo to compare
+						authored controls with generated ones.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher&gt;
@@ -503,12 +515,16 @@ control.value = 'dark';</code></pre>
 				<div class="demo-section">
 					<h3>Apply a saved choice before first paint</h3>
 					<p>
-						For a saved preference to affect the first paint,
-						restore it before your stylesheets load. Match the
-						storage key and allowed themes to your control. The
-						component then picks up that preference when it’s ready.
-						Choose a theme in this frame, then use its reload link
-						to try restoring it. The frame uses its own storage key.
+						Restore a saved preference before your stylesheets load
+						to avoid a flash of the default theme. Match the storage
+						key and allowed values to your control. Choose a theme
+						in this frame, then use its reload link to try it. See
+						the
+						<a
+							href="https://github.com/aarongustafson/theme-switcher#restore-a-saved-choice-before-first-paint"
+							>README for cookie restoration and Content Security
+							Policy guidance</a
+						>.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;script&gt;
