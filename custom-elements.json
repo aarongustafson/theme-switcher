@@ -1,0 +1,35 @@
+{
+	"schemaVersion": "1.0.0",
+	"readme": "",
+	"modules": [
+		{
+			"kind": "javascript-module",
+			"path": "theme-switcher.js",
+			"declarations": [
+				{
+					"kind": "class",
+					"description": "A light-DOM tri-state theme picker built on form-multi-switch.",
+					"name": "ThemeSwitcherElement",
+					"members": [],
+					"events": [],
+					"attributes": [],
+					"superclass": {
+						"name": "HTMLElement"
+					},
+					"tagName": "theme-switcher",
+					"customElement": true
+				}
+			],
+			"exports": [
+				{
+					"kind": "js",
+					"name": "ThemeSwitcherElement",
+					"declaration": {
+						"name": "ThemeSwitcherElement",
+						"module": "theme-switcher.js"
+					}
+				}
+			]
+		}
+	]
+}

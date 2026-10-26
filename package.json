@@ -1,0 +1,82 @@
+{
+	"name": "@aarongustafson/theme-switcher",
+	"version": "0.0.1",
+	"description": "A light-DOM tri-state theme picker built on form-multi-switch.",
+	"keywords": [
+		"html",
+		"custom element",
+		"web component"
+	],
+	"author": "Aaron Gustafson <aaron@easy-designs.net> (https://www.aaron-gustafson.com/)",
+	"license": "MIT",
+	"homepage": "https://github.com/aarongustafson/theme-switcher#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/aarongustafson/theme-switcher.git"
+	},
+	"bugs": {
+		"url": "https://github.com/aarongustafson/theme-switcher/issues"
+	},
+	"type": "module",
+	"main": "index.js",
+	"module": "theme-switcher.js",
+	"customElements": "custom-elements.json",
+	"types": "theme-switcher.d.ts",
+	"exports": {
+		".": {
+			"types": "./theme-switcher.d.ts",
+			"import": "./index.js"
+		},
+		"./theme-switcher.js": {
+			"types": "./theme-switcher.d.ts",
+			"import": "./theme-switcher.js"
+		},
+		"./define.js": {
+			"import": "./define.js"
+		},
+		"./custom-elements.json": "./custom-elements.json"
+	},
+	"files": [
+		"theme-switcher.js",
+		"theme-switcher.d.ts",
+		"define.js",
+		"index.js",
+		"custom-elements.json",
+		"README.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=22.0.0"
+	},
+	"packageManager": "npm@11.15.0",
+	"scripts": {
+		"test": "vitest",
+		"test:ui": "vitest --ui",
+		"test:run": "vitest run",
+		"test:coverage": "vitest run --coverage",
+		"lint": "npm run lint:eslint && npm run lint:prettier",
+		"format": "npm run format:eslint && npm run format:prettier",
+		"lint:eslint": "eslint .",
+		"format:eslint": "eslint . --fix",
+		"lint:prettier": "prettier \"**/*.js\" --check --ignore-path .gitignore",
+		"format:prettier": "prettier \"**/*.js\" --write --ignore-path .gitignore",
+		"version": "node scripts/update-demo-versions.js && git add demo/esm.html",
+		"postversion": "git push --follow-tags"
+	},
+	"devDependencies": {
+		"@open-wc/eslint-config": "^13.1.0",
+		"@testing-library/dom": "^10.4.2",
+		"@testing-library/user-event": "^14.6.7",
+		"@vitest/coverage-v8": "^5.0.3",
+		"@vitest/ui": "^5.0.3",
+		"eslint": "^10.12.0",
+		"eslint-config-prettier": "^10.1.8",
+		"happy-dom": "^20.14.5",
+		"marked": "18.1.0",
+		"prettier": "^3.9.9",
+		"vitest": "^5.0.3"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>theme-switcher via unpkg</title>
+		<link rel="stylesheet" href="./styles.css" />
+		<style>
+			/* Demo-specific styles */
+		</style>
+	</head>
+	<body>
+		<h1>unpkg CDN sanity check</h1>
+		<p>
+			This page loads the guarded definition helper from
+			<code>unpkg</code> and registers the element when supported.
+		</p>
+
+		<theme-switcher>
+			<p>Replace this markup once you customize theme-switcher.</p>
+		</theme-switcher>
+
+		<script type="module">
+			import { defineComponentName } from 'https://unpkg.com/@aarongustafson/theme-switcher@latest/define.js?module';
+
+			defineComponentName();
+		</script>
+	</body>
+</html>
