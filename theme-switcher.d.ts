@@ -1,65 +1,80 @@
-/**
- * ThemeSwitcherElement - A light-DOM tri-state theme picker built on form-multi-switch.
- *
- * @element theme-switcher
- *
- * @attr {string} example-attribute - Description of the attribute
- *
- * @fires theme-switcher:event-name - Description of the event
- *
- * @slot - Default slot for content
- *
- * @cssprop --component-name-color - Description of CSS custom property
- */
-export class ThemeSwitcherElement extends HTMLElement {
-	/**
-	 * List of attributes to observe for changes
-	 */
+import { FormMultiSwitchElement } from '@aarongustafson/form-multi-switch';
+export type {
+	MultiSwitchChoice,
+	MultiSwitchConfiguration,
+	MultiSwitchBehaviorModule,
+	MultiSwitchSelectionDetail,
+	MultiSwitchErrorDetail,
+	MultiSwitchState,
+} from '@aarongustafson/form-multi-switch';
+
+export type ThemeChangeSource =
+	| 'initial'
+	| 'user'
+	| 'api'
+	| 'attribute'
+	| 'configuration'
+	| 'reset'
+	| 'storage'
+	| 'sync'
+	| 'system';
+export type ThemeStorage = 'local' | 'none';
+export interface ThemeChangeDetail {
+	/** The page preference, including custom values. System remains literal. */
+	value: string;
+	previousValue: string | null;
+	resolvedTheme: string;
+	previousResolvedTheme: string | null;
+	source: ThemeChangeSource;
+}
+export interface ThemeErrorDetail {
+	error: unknown;
+	phase: 'configuration' | 'storage' | 'synchronization';
+}
+export interface ThemeReadyDetail {
+	value: string | null;
+	resolvedTheme: string | null;
+}
+
+export class ThemeSwitcherElement extends FormMultiSwitchElement {
 	static readonly observedAttributes: string[];
-
-	/**
-	 * Internal state and flags
+	/** Current selection; null before setup or if this control lacks the page theme. */
+	get value(): string | null;
+	/** Apply and save an offered theme without changing the reset default.
+	 * While pending, queue it for validation against the prepared choices; ready
+	 * rejects an unsupported queued value. Ready-state assignments throw instead.
 	 */
-	private readonly _internals: {
-		isRendered: boolean;
-	};
+	set value(value: string);
+	/** System resolves to light/dark; custom theme values pass through unchanged. */
+	readonly resolvedTheme: string | null;
+	get storageKey(): string;
+	set storageKey(value: string | null | undefined);
+	get storage(): ThemeStorage;
+	set storage(value: ThemeStorage | null | undefined);
+	/** Effective optional cookie name; a bare cookie attribute uses storageKey. */
+	get cookie(): string | null;
+	set cookie(value: string | boolean | null | undefined);
+	/** Positive cookie lifetime in seconds, defaulting to one year. */
+	cookieMaxAge: number;
+	get systemLabel(): string;
+	set systemLabel(value: string | null | undefined);
+	get lightLabel(): string;
+	set lightLabel(value: string | null | undefined);
+	get darkLabel(): string;
+	set darkLabel(value: string | null | undefined);
+	/** Includes theme configuration errors; storage failures are nonfatal. */
+	readonly state: 'pending' | 'loading' | 'ready' | 'error';
+	/** Resolves after native enhancement and theme setup; rejects on invalid configuration. */
+	readonly ready: Promise<void>;
+}
 
-	constructor();
-
-	/**
-	 * Called when the element is connected to the DOM
-	 */
-	connectedCallback(): void;
-
-	/**
-	 * Called when an observed attribute changes
-	 * @param name - The attribute name that changed
-	 * @param oldValue - The previous value
-	 * @param newValue - The new value
-	 */
-	attributeChangedCallback(
-		name: string,
-		oldValue: string | null,
-		newValue: string | null,
-	): void;
-
-	/**
-	 * Upgrade a property to handle cases where it was set before the element upgraded.
-	 * This is especially important for framework compatibility.
-	 * @param prop - Property name to upgrade
-	 * @private
-	 */
-	private _upgradeProperty(prop: string): void;
-
-	/**
-	 * Example attribute as a property.
-	 * Reflects between property and attribute to keep them in sync.
-	 */
-	get exampleAttribute(): string | null;
-	set exampleAttribute(value: string | null | undefined);
-
-	/**
-	 * Renders the component's shadow DOM content
-	 */
-	render(): void;
+declare global {
+	interface HTMLElementTagNameMap {
+		'theme-switcher': ThemeSwitcherElement;
+	}
+	interface HTMLElementEventMap {
+		'theme-switcher:change': CustomEvent<ThemeChangeDetail>;
+		'theme-switcher:ready': CustomEvent<ThemeReadyDetail>;
+		'theme-switcher:error': CustomEvent<ThemeErrorDetail>;
+	}
 }
