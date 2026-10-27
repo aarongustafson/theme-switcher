@@ -42,6 +42,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		this._themeResolved = null;
 		this._themePendingValue = undefined;
 		this._themePersistPendingValue = false;
+		this._themePendingStorage = null;
 		this._themeError = null;
 		this.addEventListener('form-multi-switch:ready', (event) => {
 			if (event.target === this) this._themeInitialize();
@@ -108,7 +109,6 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 				'storage',
 				(event) => {
 					if (
-						this.state !== 'ready' ||
 						this.storage !== 'local' ||
 						(event.key !== null && event.key !== this.storageKey)
 					)
@@ -125,6 +125,14 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 						return;
 					}
 					const value = event.newValue ?? 'system';
+					if (super.state !== 'ready' || this._themeConfiguring) {
+						this._themePendingStorage = {
+							key: this.storageKey,
+							value,
+						};
+						return;
+					}
+					if (this.state !== 'ready') return;
 					if (!this._themeSupports(value)) {
 						this._themeReport(
 							new RangeError(`Unsupported saved theme: ${value}`),
@@ -171,7 +179,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 						)
 					)
 						return;
-					queueMicrotask(() => {
+					setTimeout(() => {
 						if (
 							!signal.aborted &&
 							this.state === 'ready' &&
@@ -182,7 +190,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 								'reset',
 								true,
 							);
-					});
+					}, 0);
 				},
 				{ signal },
 			);
@@ -206,6 +214,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		this._themeSelection = null;
 		this._themeResolved = null;
 		this._themeReloadStorage = false;
+		this._themePendingStorage = null;
 		super.disconnectedCallback();
 	}
 
@@ -258,6 +267,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 		if (
 			name === 'value' &&
 			this._themeStarted &&
+			!this._themeConfiguring &&
 			this.state === 'ready' &&
 			!this._themeAuthored()
 		) {
@@ -465,6 +475,27 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			let value = this._themePendingValue;
 			const persistPendingValue = this._themePersistPendingValue;
 			let sharedPreference = value !== undefined && !persistPendingValue;
+			const pendingStorage = this._themePendingStorage;
+			let applyStorage = false;
+			this._themePendingStorage = null;
+			if (
+				!persistPendingValue &&
+				this.storage === 'local' &&
+				pendingStorage?.key === this.storageKey
+			) {
+				if (this._themeSupports(pendingStorage.value)) {
+					value = pendingStorage.value;
+					sharedPreference = false;
+					applyStorage = true;
+				} else {
+					this._themeReport(
+						new RangeError(
+							`Unsupported saved theme: ${pendingStorage.value}`,
+						),
+						'storage',
+					);
+				}
+			}
 			this._themePendingValue = undefined;
 			this._themePersistPendingValue = false;
 			if (
@@ -500,8 +531,11 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			this._themeReloadStorage = false;
 			peers.add(this);
 			this.setAttribute('data-multi-switch-state', super.state);
-			const source =
-				this._themeSelection === null ? 'initial' : 'configuration';
+			const source = applyStorage
+				? 'storage'
+				: this._themeSelection === null
+					? 'initial'
+					: 'configuration';
 			if (sharedPreference && !this._themeSupports(value))
 				this._themeUpdate(value, source);
 			else
@@ -509,7 +543,9 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 					value,
 					source,
 					persistPendingValue ||
-						(this.cookie !== null && saved != null),
+						(!applyStorage &&
+							this.cookie !== null &&
+							saved != null),
 				);
 			this.dispatchEvent(
 				new CustomEvent('theme-switcher:ready', {
@@ -650,6 +686,10 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 						'SecurityError',
 					);
 				this._themeCookieSnapshot = value;
+				for (const peer of documents.get(this.ownerDocument) ?? []) {
+					if (peer.storage !== 'none' && peer.cookie === this.cookie)
+						peer._themeCookieSnapshot = value;
+				}
 			} catch (error) {
 				this._themeReport(error, 'storage');
 			}
@@ -666,6 +706,7 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 	}
 
 	_themeUpdate(value, source) {
+		if (source === 'sync') this._themePendingStorage = null;
 		if (
 			this._themePendingValue !== undefined &&
 			!this._themePersistPendingValue

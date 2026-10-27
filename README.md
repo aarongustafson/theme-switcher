@@ -276,6 +276,11 @@ cookie changes also update localStorage; deleting the cookie selects and saves
 System. Unsupported saved values and blocked storage produce
 diagnostics; blocked storage doesn’t prevent theme changes.
 
+Storage events received while a control is regenerating or loading behavior are
+applied when it’s ready. An explicitly queued `.value` takes precedence. Saving
+a cookie also updates matching controls’ change-detection snapshots without
+writing their localStorage entries.
+
 Changing `storage-key` or `cookie` on an initialized control, or turning
 persistence back on, reads the saved preference for that key. Without a saved
 value, the current selection is retained. Newly connected controls join the
@@ -376,8 +381,9 @@ Both authored and generated radios participate in native forms. Submission
 includes the selected radio’s name/value; set `name` on a generated control
 when you need a predictable field name. Reset restores the authored checked
 default (or generated `value` default), then applies and saves that preference.
-If no radio is checked after reset, the component selects System. A canceled
-reset leaves the theme alone.
+Reconciliation runs in a task after the browser restores the radios, including
+when someone activates a Reset button. If no radio is checked after reset, the
+component selects System. A canceled reset leaves the theme alone.
 
 Reset also works when the form and controls share a shadow tree, including radios
 associated with a form through their `form` attribute.
@@ -523,6 +529,8 @@ python3 -m http.server 8765
 ```
 
 Open `/demo/` for examples and `/test/browser.html` for browser-only checks.
+Add `?native-reset` to the browser-check URL and activate **Reset appearance**
+when it appears to test a real reset-button activation.
 
 ## License
 

@@ -26,6 +26,7 @@ async function setup(markup = '') {
 	await control.ready;
 	return control;
 }
+const afterReset = () => new Promise((resolve) => setTimeout(resolve, 0));
 const radios = `<fieldset><legend>Reading appearance</legend>
 	<label><input type="radio" name="appearance" value="system" checked>Device</label>
 	<label><input type="radio" name="appearance" value="light">Light</label>
@@ -75,14 +76,14 @@ const tests = [
 				once: true,
 			});
 			form.reset();
-			await Promise.resolve();
+			await afterReset();
 			assert(
 				control.value === 'dark' &&
 					document.documentElement.dataset.theme === 'dark',
 				'A canceled reset changed the preference.',
 			);
 			form.reset();
-			await Promise.resolve();
+			await afterReset();
 			assert(
 				control.value === 'system' &&
 					localStorage.getItem(key) === 'system',
@@ -297,6 +298,30 @@ const tests = [
 				localStorage.getItem(key) === 'light',
 				'A peer wrote a stale preference back.',
 			);
+			let finish;
+			control.loadModule = () =>
+				new Promise((resolve) => {
+					finish = resolve;
+				});
+			for (const explicit of [false, true]) {
+				control.script = `./pending-storage-${explicit}.js`;
+				await until(() => control.state === 'loading');
+				if (explicit) control.value = 'system';
+				const received = new Promise((resolve) =>
+					window.addEventListener('storage', resolve, { once: true }),
+				);
+				peer.value = explicit ? 'light' : 'dark';
+				await received;
+				finish({});
+				await control.ready;
+				assert(
+					control.value === (explicit ? 'system' : 'dark'),
+					'A storage event during loading was lost or replaced a queued API value.',
+				);
+				await until(() => peer.value === control.value);
+			}
+			peer.value = 'dark';
+			await until(() => control.value === 'dark');
 			localStorage.removeItem(key);
 			await until(() => peer.value === 'system');
 			frame.remove();
@@ -460,13 +485,13 @@ const tests = [
 				once: true,
 			});
 			form.reset();
-			await Promise.resolve();
+			await afterReset();
 			assert(
 				control.value === 'dark' && peer.value === 'dark',
 				'A canceled shadow-tree reset changed the preference.',
 			);
 			form.reset();
-			await Promise.resolve();
+			await afterReset();
 			assert(
 				control.value === 'system' &&
 					peer.value === 'system' &&
@@ -483,7 +508,7 @@ const tests = [
 				'External shadow-tree form association failed.',
 			);
 			form.reset();
-			await Promise.resolve();
+			await afterReset();
 			assert(
 				control.value === 'system' &&
 					document.documentElement.dataset.theme === 'system',
@@ -545,6 +570,62 @@ const tests = [
 		},
 	],
 	[
+		'Configuring a persistent control does not save a temporary peer preference',
+		async () => {
+			const control = await setup();
+			control.setAttribute('value', 'dark');
+			const temporary = document.createElement('theme-switcher');
+			temporary.storage = 'none';
+			fixture.append(temporary);
+			await temporary.ready;
+			temporary.value = 'light';
+			control.configure({
+				name: 'palette',
+				label: 'Palette',
+				choices: ['system', 'light', 'dark'].map((value) => ({
+					value,
+					label: value,
+				})),
+			});
+			assert(
+				localStorage.getItem(key) === 'dark',
+				'Configuration saved the old fieldset selection.',
+			);
+			await control.ready;
+			assert(
+				localStorage.getItem(key) === 'dark',
+				'Configuration saved a temporary page preference.',
+			);
+		},
+	],
+	[
+		'Cookie-backed peers share write snapshots without saving each other’s storage',
+		async () => {
+			const first = await setup();
+			first.cookie = true;
+			const second = document.createElement('theme-switcher');
+			second.storageKey = `${key}-peer`;
+			second.cookie = key;
+			localStorage.removeItem(second.storageKey);
+			fixture.append(second);
+			await second.ready;
+			first.value = 'dark';
+			const temporary = document.createElement('theme-switcher');
+			temporary.storage = 'none';
+			fixture.append(temporary);
+			await temporary.ready;
+			temporary.value = 'light';
+			window.dispatchEvent(new Event('focus'));
+			assert(
+				first.value === 'light' &&
+					second.value === 'light' &&
+					localStorage.getItem(key) === 'dark' &&
+					localStorage.getItem(second.storageKey) === null,
+				'A stale peer cookie snapshot restored or saved the wrong preference.',
+			);
+		},
+	],
+	[
 		'Selected decorative icons use a contrasting system foreground',
 		async () => {
 			const control = await setup();
@@ -573,6 +654,48 @@ const tests = [
 		},
 	],
 ];
+
+if (new URL(location.href).searchParams.has('native-reset')) {
+	tests.push([
+		'Trusted reset-button activation reconciles native radios, theme, storage, and peers',
+		async () => {
+			const control = await setup(radios);
+			const form = document.createElement('form');
+			const button = document.createElement('button');
+			button.type = 'reset';
+			button.textContent = 'Reset appearance';
+			fixture.append(form);
+			form.append(control, button);
+			await control.ready;
+			const peer = document.createElement('theme-switcher');
+			peer.storageKey = key;
+			fixture.append(peer);
+			await peer.ready;
+			control.value = 'dark';
+			await new Promise((resolve) =>
+				button.addEventListener('click', () => setTimeout(resolve, 0), {
+					once: true,
+				}),
+			);
+			await afterReset();
+			assert(
+				control.value === 'system' &&
+					peer.value === 'system' &&
+					document.documentElement.dataset.theme === 'system' &&
+					localStorage.getItem(key) === 'system',
+				`A reset-button activation left theme state out of sync: ${JSON.stringify(
+					{
+						value: control.value,
+						peer: peer.value,
+						root: document.documentElement.dataset.theme,
+						saved: localStorage.getItem(key),
+						state: control.state,
+					},
+				)}`,
+			);
+		},
+	]);
+}
 
 window.browserResults = [];
 for (const [name, test] of tests) {

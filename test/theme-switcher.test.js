@@ -20,6 +20,7 @@ async function connect(
 	await control.ready;
 	return control;
 }
+const afterReset = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 beforeEach(() => {
 	localStorage.clear();
@@ -279,7 +280,7 @@ describe('theme-switcher', () => {
 		const second = await connect();
 		control.value = 'dark';
 		form.reset();
-		await Promise.resolve();
+		await afterReset();
 		expect(control.value).toBe('system');
 		expect(second.value).toBe('system');
 		expect(document.documentElement.dataset.theme).toBe('system');
@@ -294,7 +295,7 @@ describe('theme-switcher', () => {
 		form.dispatchEvent(
 			new Event('reset', { bubbles: true, cancelable: true }),
 		);
-		await Promise.resolve();
+		await afterReset();
 		expect(control.value).toBe('dark');
 		expect(document.documentElement.dataset.theme).toBe('dark');
 	});
@@ -476,7 +477,7 @@ describe('theme-switcher', () => {
 		await control.ready;
 		expect(control.value).toBe('system');
 		form.reset();
-		await Promise.resolve();
+		await afterReset();
 		expect(control.value).toBe('dark');
 		expect(document.documentElement.dataset.theme).toBe('dark');
 	});
@@ -710,6 +711,172 @@ describe('theme-switcher', () => {
 		expect(localStorage.getItem('theme-switcher')).toBe('light');
 	});
 
+	it.each([false, true])(
+		'queues storage updates during regeneration without overriding queued API values (%s)',
+		async (explicit) => {
+			const control = await connect();
+			control.value = 'dark';
+			control.darkLabel = 'Night';
+			if (explicit) control.value = 'system';
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'theme-switcher',
+					newValue: 'light',
+					storageArea: localStorage,
+				}),
+			);
+			await control.ready;
+			expect(control.value).toBe(explicit ? 'system' : 'light');
+			expect(document.documentElement.dataset.theme).toBe(
+				explicit ? 'system' : 'light',
+			);
+			expect(localStorage.getItem('theme-switcher')).toBe(
+				explicit ? 'system' : 'dark',
+			);
+		},
+	);
+
+	it('queues the latest storage event while a behavior module is loading', async () => {
+		const control = await connect();
+		control.cookie = true;
+		control.value = 'dark';
+		let finish;
+		vi.spyOn(control, 'loadModule').mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finish = resolve;
+				}),
+		);
+		control.script = './slow.js';
+		await vi.waitFor(() => expect(control.state).toBe('loading'));
+		for (const newValue of ['dark', 'light']) {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'theme-switcher',
+					newValue,
+					storageArea: localStorage,
+				}),
+			);
+		}
+		finish({});
+		await control.ready;
+		expect(control.value).toBe('light');
+		expect(document.cookie).toContain('theme-switcher=light');
+		expect(localStorage.getItem('theme-switcher')).toBe('dark');
+	});
+
+	it('does not persist the old selection while configure batches its attributes', async () => {
+		const control = await connect();
+		control.setAttribute('value', 'dark');
+		const temporary = document.createElement('theme-switcher');
+		temporary.storage = 'none';
+		await connect(temporary);
+		temporary.value = 'light';
+		control.configure({
+			name: 'palette',
+			label: 'Palette',
+			choices: themesForTest(),
+		});
+		expect(localStorage.getItem('theme-switcher')).toBe('dark');
+		await control.ready;
+		expect(localStorage.getItem('theme-switcher')).toBe('dark');
+	});
+
+	it.each(['invalid', 'key', 'none', 'disconnect', 'sync'])(
+		'does not apply an obsolete or invalid queued storage update (%s)',
+		async (reason) => {
+			const control = await connect();
+			control.value = 'dark';
+			control.darkLabel = 'Night';
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'theme-switcher',
+					newValue: reason === 'invalid' ? 'missing' : 'light',
+					storageArea: localStorage,
+				}),
+			);
+			if (reason === 'key') control.storageKey = 'site-theme';
+			if (reason === 'none') control.storage = 'none';
+			if (reason === 'disconnect') {
+				control.remove();
+				await connect(control);
+			}
+			if (reason === 'sync') {
+				const peer = await connect();
+				peer.value = 'dark';
+			}
+			await control.ready;
+			expect(control.value).toBe('dark');
+			if (reason === 'invalid') expect(console.error).toHaveBeenCalled();
+		},
+	);
+
+	it('validates queued storage against newly prepared choices and handles storage clearing', async () => {
+		const control = await connect();
+		control.configure({
+			name: 'palette',
+			label: 'Palette',
+			choices: [...themesForTest(), { value: 'sepia', label: 'Sepia' }],
+		});
+		window.dispatchEvent(
+			new StorageEvent('storage', {
+				key: 'theme-switcher',
+				newValue: 'sepia',
+				storageArea: localStorage,
+			}),
+		);
+		await control.ready;
+		expect(control.value).toBe('sepia');
+		control.label = 'Updated palette';
+		window.dispatchEvent(
+			new StorageEvent('storage', {
+				key: null,
+				newValue: null,
+				storageArea: localStorage,
+			}),
+		);
+		await control.ready;
+		expect(control.value).toBe('system');
+	});
+
+	it('shares successful cookie-write snapshots without persisting temporary peer updates', async () => {
+		const first = document.createElement('theme-switcher');
+		first.cookie = true;
+		await connect(first);
+		const second = document.createElement('theme-switcher');
+		second.storageKey = 'site-theme';
+		second.cookie = 'theme-switcher';
+		await connect(second);
+		first.value = 'dark';
+		const temporary = document.createElement('theme-switcher');
+		temporary.storage = 'none';
+		await connect(temporary);
+		temporary.value = 'light';
+		window.dispatchEvent(new Event('focus'));
+		expect(first.value).toBe('light');
+		expect(second.value).toBe('light');
+		expect(temporary.value).toBe('light');
+		expect(document.cookie).toContain('theme-switcher=dark');
+		expect(localStorage.getItem('theme-switcher')).toBe('dark');
+		expect(localStorage.getItem('site-theme')).toBeNull();
+		document.cookie = 'theme-switcher=system; Path=/';
+		window.dispatchEvent(new Event('focus'));
+		expect(first.value).toBe('system');
+		expect(second.value).toBe('system');
+	});
+
+	it('does not reconcile a reset after the control disconnects', async () => {
+		const form = document.createElement('form');
+		document.body.append(form);
+		const control = await connect(authored(), form);
+		control.value = 'dark';
+		form.reset();
+		control.remove();
+		await afterReset();
+		expect(document.documentElement.dataset.theme).toBe('dark');
+		expect(localStorage.getItem('theme-switcher')).toBe('dark');
+	});
+
 	it('preserves explicit queued API values across relabeling and synchronization', async () => {
 		const first = await connect();
 		const second = await connect();
@@ -756,7 +923,7 @@ describe('theme-switcher', () => {
 		const peer = await connect();
 		control.value = 'dark';
 		form.reset();
-		await Promise.resolve();
+		await afterReset();
 		expect(control.value).toBe('system');
 		expect(peer.value).toBe('system');
 		expect(document.documentElement.dataset.theme).toBe('system');
