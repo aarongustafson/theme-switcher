@@ -1,6 +1,6 @@
 {
 	"schemaVersion": "1.0.0",
-	"readme": "",
+	"readme": "README.md",
 	"modules": [
 		{
 			"kind": "javascript-module",
@@ -8,22 +8,256 @@
 			"declarations": [
 				{
 					"kind": "class",
-					"description": "A light-DOM tri-state theme picker built on form-multi-switch.",
 					"name": "ThemeSwitcherElement",
-					"members": [],
-					"events": [],
-					"attributes": [],
+					"description": "A light-DOM tri-state theme preference control. Applies the literal preference to html[data-theme], persists it when enabled, and synchronizes controls and tabs. Authored radio markup wins over choices, name, label, and value attributes. Includes system, light, and dark; additional themes are author-defined.",
+					"customElement": true,
 					"superclass": {
-						"name": "HTMLElement"
+						"name": "FormMultiSwitchElement",
+						"package": "@aarongustafson/form-multi-switch",
+						"module": "form-multi-switch.js"
 					},
-					"tagName": "theme-switcher",
-					"customElement": true
+					"attributes": [
+						{
+							"name": "storage-key",
+							"fieldName": "storageKey",
+							"type": { "text": "string" },
+							"default": "\"theme-switcher\"",
+							"description": "Nonempty localStorage key and default cookie name when cookie is enabled. Changing it reads the new saved preference."
+						},
+						{
+							"name": "storage",
+							"fieldName": "storage",
+							"type": { "text": "'local' | 'none'" },
+							"default": "\"local\"",
+							"description": "Uses localStorage by default. None disables both localStorage and optional cookies, without deleting saved values or isolating same-document controls."
+						},
+						{
+							"name": "cookie",
+							"fieldName": "cookie",
+							"type": { "text": "string" },
+							"description": "Opt-in cookie mirror and fallback. An empty attribute uses storage-key; a value chooses a separate cookie name. LocalStorage takes precedence at startup. Cookies use Path=/, SameSite=Lax, and Secure on HTTPS. Storage none overrides this option."
+						},
+						{
+							"name": "cookie-max-age",
+							"fieldName": "cookieMaxAge",
+							"type": { "text": "number" },
+							"default": "31536000",
+							"description": "Positive cookie lifetime in seconds. Cookies also synchronize through Cookie Store change events where supported, with focus/visibility checks as a fallback."
+						},
+						{
+							"name": "system-label",
+							"fieldName": "systemLabel",
+							"type": { "text": "string" },
+							"default": "\"System\"",
+							"description": "System label for default generated choices only."
+						},
+						{
+							"name": "light-label",
+							"fieldName": "lightLabel",
+							"type": { "text": "string" },
+							"default": "\"Light\"",
+							"description": "Light label for default generated choices only."
+						},
+						{
+							"name": "dark-label",
+							"fieldName": "darkLabel",
+							"type": { "text": "string" },
+							"default": "\"Dark\"",
+							"description": "Dark label for default generated choices only."
+						}
+					],
+					"members": [
+						{
+							"kind": "field",
+							"name": "value",
+							"type": { "text": "string | null" },
+							"description": "Current radio selection. Set a nonempty offered string to apply and persist a preference without changing the reset default. While pending, values are queued and validated against the prepared choices; ready rejects unsupported queued values. Unsupported ready-state assignments throw. Null before setup or when this control does not offer the active page theme, including on connection; assigning null throws."
+						},
+						{
+							"kind": "field",
+							"name": "resolvedTheme",
+							"readonly": true,
+							"type": { "text": "string | null" },
+							"description": "System resolves to light or dark using prefers-color-scheme; custom themes pass through. Null before setup."
+						},
+						{
+							"kind": "field",
+							"name": "storageKey",
+							"attribute": "storage-key",
+							"type": { "text": "string" },
+							"default": "\"theme-switcher\""
+						},
+						{
+							"kind": "field",
+							"name": "storage",
+							"attribute": "storage",
+							"type": { "text": "'local' | 'none'" },
+							"default": "\"local\""
+						},
+						{
+							"kind": "field",
+							"name": "cookie",
+							"attribute": "cookie",
+							"type": { "text": "string | null" },
+							"default": "null",
+							"description": "Effective cookie name or null when not configured. Setter accepts a name, true to use storage-key, or false/null/undefined to disable the cookie."
+						},
+						{
+							"kind": "field",
+							"name": "cookieMaxAge",
+							"attribute": "cookie-max-age",
+							"type": { "text": "number" },
+							"default": "31536000"
+						},
+						{
+							"kind": "field",
+							"name": "systemLabel",
+							"attribute": "system-label",
+							"type": { "text": "string" },
+							"default": "\"System\""
+						},
+						{
+							"kind": "field",
+							"name": "lightLabel",
+							"attribute": "light-label",
+							"type": { "text": "string" },
+							"default": "\"Light\""
+						},
+						{
+							"kind": "field",
+							"name": "darkLabel",
+							"attribute": "dark-label",
+							"type": { "text": "string" },
+							"default": "\"Dark\""
+						},
+						{
+							"kind": "field",
+							"name": "ready",
+							"readonly": true,
+							"type": { "text": "Promise<void>" },
+							"description": "Current enhancement and theme setup promise. Rejects on configuration or inherited enhancement failure. Read again after reconfiguration. Storage failures are nonfatal."
+						},
+						{
+							"kind": "field",
+							"name": "state",
+							"readonly": true,
+							"type": {
+								"text": "'pending' | 'loading' | 'ready' | 'error'"
+							},
+							"description": "Inherited enhancement state, including theme configuration errors."
+						}
+					],
+					"events": [
+						{
+							"name": "theme-switcher:change",
+							"type": {
+								"text": "CustomEvent<ThemeChangeDetail>"
+							},
+							"description": "Bubbles after a preference or resolved theme changes, including initialization. Detail: value, previousValue, resolvedTheme, previousResolvedTheme, source. Sources: initial, user, api, attribute, configuration, reset, storage, sync, system. Does not replace inherited user-interaction events."
+						},
+						{
+							"name": "theme-switcher:ready",
+							"type": { "text": "CustomEvent<ThemeReadyDetail>" },
+							"description": "Bubbles after native enhancement and successful theme setup. Detail: value, resolvedTheme."
+						},
+						{
+							"name": "theme-switcher:error",
+							"type": { "text": "CustomEvent<ThemeErrorDetail>" },
+							"description": "Bubbling diagnostic, also logged to console.error. Detail: error, phase (configuration, storage, synchronization). Storage and synchronization diagnostics are nonfatal."
+						}
+					],
+					"cssProperties": [
+						{
+							"name": "--multi-switch-border",
+							"description": "Inherited segment border color.",
+							"default": "ButtonBorder"
+						},
+						{
+							"name": "--multi-switch-background",
+							"description": "Inherited unselected background.",
+							"default": "Canvas"
+						},
+						{
+							"name": "--multi-switch-color",
+							"description": "Inherited unselected text color.",
+							"default": "CanvasText"
+						},
+						{
+							"name": "--multi-switch-selected-background",
+							"description": "Inherited selected background.",
+							"default": "Highlight"
+						},
+						{
+							"name": "--multi-switch-selected-color",
+							"description": "Inherited selected text color.",
+							"default": "HighlightText"
+						},
+						{
+							"name": "--multi-switch-focus-color",
+							"description": "Inherited focus-visible outline color.",
+							"default": "Highlight"
+						},
+						{
+							"name": "--multi-switch-radius",
+							"description": "Inherited control corner radius.",
+							"default": "0.5rem"
+						},
+						{
+							"name": "--multi-switch-padding",
+							"description": "Inherited segment padding.",
+							"default": "0.5em 0.85em"
+						}
+					]
 				}
 			],
 			"exports": [
 				{
 					"kind": "js",
 					"name": "ThemeSwitcherElement",
+					"declaration": {
+						"name": "ThemeSwitcherElement",
+						"module": "theme-switcher.js"
+					}
+				}
+			]
+		},
+		{
+			"kind": "javascript-module",
+			"path": "index.js",
+			"exports": [
+				{
+					"kind": "js",
+					"name": "ThemeSwitcherElement",
+					"declaration": {
+						"name": "ThemeSwitcherElement",
+						"module": "theme-switcher.js"
+					}
+				}
+			]
+		},
+		{
+			"kind": "javascript-module",
+			"path": "define.js",
+			"declarations": [
+				{
+					"kind": "function",
+					"name": "defineThemeSwitcher",
+					"description": "Guarded registration for theme-switcher; called on import.",
+					"return": { "type": { "text": "boolean" } }
+				}
+			],
+			"exports": [
+				{
+					"kind": "js",
+					"name": "defineThemeSwitcher",
+					"declaration": {
+						"name": "defineThemeSwitcher",
+						"module": "define.js"
+					}
+				},
+				{
+					"kind": "custom-element-definition",
+					"name": "theme-switcher",
 					"declaration": {
 						"name": "ThemeSwitcherElement",
 						"module": "theme-switcher.js"

@@ -11,7 +11,5 @@ vitest.config.js
 .git
 .gitignore
 .github/
-SETUP.md
-TEMPLATE_README.md
 CONTRIBUTING.md
 coverage/

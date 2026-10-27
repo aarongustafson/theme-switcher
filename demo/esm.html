@@ -3,29 +3,26 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>theme-switcher via esm.sh</title>
+		<title>Load theme-switcher from esm.sh</title>
 		<link rel="stylesheet" href="./styles.css" />
-		<style>
-			/* Demo-specific styles */
-		</style>
 	</head>
 	<body>
-		<h1>esm.sh CDN sanity check</h1>
+		<h1>Load from esm.sh</h1>
 		<p>
-			This page loads the component class from <code>esm.sh</code> and
-			registers it manually.
+			This draft isn’t on npm yet. After publication, esm.sh can resolve
+			the base dependency for you:
 		</p>
-
-		<theme-switcher>
-			<p>Replace this markup once you customize theme-switcher.</p>
-		</theme-switcher>
-
-		<script type="module">
-			import { ThemeSwitcherElement } from 'https://esm.sh/@aarongustafson/theme-switcher@0.0.1/theme-switcher.js?bundle&target=es2022';
-
-			if (!customElements.get('theme-switcher')) {
-				customElements.define('theme-switcher', ThemeSwitcherElement);
-			}
-		</script>
+		<pre><code>&lt;script type="module"&gt;
+  import { ThemeSwitcherElement } from
+    'https://esm.sh/@aarongustafson/theme-switcher@0.0.1/theme-switcher.js?bundle&amp;target=es2022';
+  customElements.define('theme-switcher',
+    ThemeSwitcherElement);
+&lt;/script&gt;
+&lt;theme-switcher label="Color theme"&gt;
+&lt;/theme-switcher&gt;</code></pre>
+		<p>
+			<a href="./">Use the working local demos</a> while reviewing the
+			draft.
+		</p>
 	</body>
 </html>

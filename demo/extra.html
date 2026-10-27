@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Extra reading palette</title>
+		<link rel="stylesheet" href="./styles.css" />
+		<script type="importmap">
+			{
+				"imports": {
+					"@aarongustafson/form-multi-switch": "../node_modules/@aarongustafson/form-multi-switch/index.js"
+				}
+			}
+		</script>
+		<script type="module" src="../define.js"></script>
+	</head>
+	<body>
+		<theme-switcher
+			storage="none"
+			label="Reading palette"
+			choices='[{"label":"System","value":"system"},{"label":"Light","value":"light"},{"label":"Dark","value":"dark"},{"label":"Sepia","value":"sepia"}]'
+		>
+		</theme-switcher>
+		<p>
+			This paragraph uses the selected page palette. Sepia has its own
+			background and text colors.
+		</p>
+		<p>
+			<small
+				>This example doesn’t save your choice or change the parent
+				page.</small
+			>
+		</p>
+	</body>
+</html>

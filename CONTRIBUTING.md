@@ -34,6 +34,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 2. Create a new branch from `main`: `git checkout -b feature/my-feature`
 3. Make your changes
 4. Run tests: `npm run test:run`
+   and declaration checks: `npm run test:types`
 5. Run linter: `npm run lint`
 6. Format code: `npm run format`
 7. Commit your changes with a clear commit message
@@ -68,6 +69,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ## Coding Style
 
 This project uses:
+
 - ESLint for code quality
 - Prettier for code formatting
 - Vitest for testing
@@ -79,6 +81,11 @@ Run `npm run format` before committing to ensure consistent formatting.
 - Update README.md if you change functionality
 - Add JSDoc comments to new public APIs
 - Update custom-elements.json if you add/change attributes, events, or properties
+- Keep declarations, exports, package contents, and demos aligned with the API.
+- Show code on the left and the working example on the right on wide screens;
+  stack them on narrow screens. Use the existing demo classes and check the
+  result in a browser.
+- Run `test/browser.html` in a real browser for native form and storage behavior.
 
 ## License
 

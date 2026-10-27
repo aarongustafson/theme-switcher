@@ -1,6 +1,6 @@
 import { ThemeSwitcherElement } from './theme-switcher.js';
 
-export function defineComponentName(tagName = 'theme-switcher') {
+export function defineThemeSwitcher() {
 	const hasWindow = typeof window !== 'undefined';
 	const registry = hasWindow ? window.customElements : undefined;
 
@@ -8,11 +8,17 @@ export function defineComponentName(tagName = 'theme-switcher') {
 		return false;
 	}
 
-	if (!registry.get(tagName)) {
-		registry.define(tagName, ThemeSwitcherElement);
+	const existing = registry.get('theme-switcher');
+	if (existing && existing !== ThemeSwitcherElement) {
+		throw new Error(
+			'theme-switcher is already registered with a different constructor.',
+		);
+	}
+	if (!existing) {
+		registry.define('theme-switcher', ThemeSwitcherElement);
 	}
 
 	return true;
 }
 
-defineComponentName();
+defineThemeSwitcher();
