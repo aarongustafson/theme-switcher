@@ -1,6 +1,6 @@
 {
 	"name": "@aarongustafson/theme-switcher",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "A light-DOM tri-state theme picker built on form-multi-switch.",
 	"keywords": [
 		"html",
