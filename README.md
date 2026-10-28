@@ -91,9 +91,8 @@ the media query override an explicit user choice.
 
 ### How preferences are loaded
 
-When booted, the first instance of this component restores the user’s saved theme
-preference. If there isn’t one, it uses the authored default before falling back
-to their system preference. The order is:
+When booted, the component restores a user’s saved site preference before following
+their device preference. Author-provided defaults don’t override either. It uses:
 
 1. A valid localStorage preference, unless `storage="none"` is set.
 2. A valid cookie preference, if `cookie` is enabled and localStorage is missing,
@@ -114,6 +113,19 @@ light or dark preference. A saved System choice overrides every author default.
 The component doesn’t read `<html data-theme>` as a preference; it writes the
 result there. Additional controls join the page’s current preference rather than
 loading their own saved choice.
+
+An existing `<html data-theme>` is an early rendering result, not a separate
+preference source. Any head script should use the same storage order and fall
+back to System. Preference lookup stops at the first valid result, without
+timestamps or comparison reads. Optional cookie mirroring can still write and
+verify the cookie.
+
+Checked radios and the generated `value` attribute keep their native reset
+defaults; they don’t choose the initial theme. Assignments to `.value` before
+initial theme setup are ignored and aren’t saved, including assignments in a
+behavior module’s first initializer. To make an explicit runtime change, await
+`ready` first. During later reconfiguration or behavior loading, `.value`
+assignments are still queued and applied when the control is ready.
 
 ## Configuration
 
