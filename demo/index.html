@@ -30,10 +30,9 @@
 			</p>
 			<noscript>
 				<p>
-					JavaScript is off. You’ll notice the authored radios still 
-					work as form controls, but they don’t change this page’s 
-					theme. Generated controls are unavailable. This is
-					expected.
+					JavaScript is off. You’ll notice the authored radios still
+					work as form controls, but they don’t change this page’s
+					theme. Generated controls are unavailable. This is expected.
 				</p>
 			</noscript>
 		</header>
@@ -41,7 +40,7 @@
 			<p>
 				Note: All controls on this page share its theme and use the
 				demo-only storage key <code>theme-switcher-demo</code>, except
-				the temporary control, which doesn’t save changes. Framed 
+				the temporary control, which doesn’t save changes. Framed
 				examples have their own page themes and storage settings.
 			</p>
 			<p>
@@ -74,9 +73,10 @@ body {
   color: CanvasText;
 }</code></pre>
 						<div class="demo">
-							<theme-switcher id="default"
+							<theme-switcher
+								id="default"
 								storage-key="theme-switcher-demo"
-								></theme-switcher>
+							></theme-switcher>
 							<output id="theme-status" aria-live="polite"
 								>Waiting for the component.</output
 							>
@@ -100,7 +100,8 @@ body {
 							href="https://github.com/aarongustafson/form-multi-switch#styling"
 							>base component’s
 							<code>--multi-switch-*</code> properties</a
-						> to override the component’s default design.
+						>
+						to override the component’s default design.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher class="pill"
@@ -128,10 +129,10 @@ body {
 					<h3>Add icons, with or without visible labels</h3>
 					<p>
 						This example uses CSS masks to add decorative icons. In
-						<code>icon-only</code> mode, it hides the labels visually,
-						but they remain available to assistive technology. By 
-						default the legend is displayed, but you can hide that
-						using your own CSS.
+						<code>icon-only</code> mode, it hides the labels
+						visually, but they remain available to assistive
+						technology. By default the legend is displayed, but you
+						can hide that using your own CSS.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher class="icons"
@@ -184,8 +185,8 @@ theme-switcher.hide-legend legend {
 				<div class="demo-section">
 					<h3>Translate the labels</h3>
 					<p>
-						Default labels are English, but you can translate 
-						everything. Supply translated (or custom) legend and 
+						Default labels are English, but you can translate
+						everything. Supply translated (or custom) legend and
 						choice labels via their attributes.
 					</p>
 					<div class="code-demo-pair">
@@ -230,10 +231,10 @@ theme-switcher.hide-legend legend {
 				<div class="demo-section">
 					<h3>Want more themes?</h3>
 					<p>
-						You can add to the number of themes by replacing the 
+						You can add to the number of themes by replacing the
 						choices. Be sure to include System, Light, and Dark
-						alongside your custom options, then use your own CSS
-						to implement the extra palettes.
+						alongside your custom options, then use your own CSS to
+						implement the extra palettes.
 					</p>
 					<div class="code-demo-pair">
 						<pre><code>&lt;theme-switcher storage="none"
@@ -263,19 +264,19 @@ theme-switcher.hide-legend legend {
 			<section>
 				<h2>Storing preferences</h2>
 				<p>
-					By default, preferences are saved to `localStorage`, but 
-					you can control that and back it with cookies for 
-					server-side persistence.
+					By default, preferences are saved to `localStorage`, but you
+					can control that and back it with cookies for server-side
+					persistence.
 				</p>
 				<div class="demo-section">
 					<h3>Cookie example</h3>
 					<p>
-						Add the <code>cookie</code> attribute to save the 
-						user’s preference in both `localStorage` and a cookie,
-						so your server can read it too. On startup, a valid
-						`localStorage` value wins, with the cookie as a fallback.
-						A bare attribute uses the storage key as the cookie
-						name; supply a value to name it separately.
+						Add the <code>cookie</code> attribute to save the user’s
+						preference in both `localStorage` and a cookie, so your
+						server can read it too. On startup, a valid
+						`localStorage` value wins, with the cookie as a
+						fallback. A bare attribute uses the storage key as the
+						cookie name; supply a value to name it separately.
 						<code>storage="none"</code> disables both stores.
 					</p>
 					<div class="code-demo-pair">
@@ -313,11 +314,11 @@ theme-switcher.hide-legend legend {
 				<div class="demo-section">
 					<h3>Keep a native fallback</h3>
 					<p>
-						If you want to enable a server-side fallback, you can
-						do that by authoring a native fallback using a radio
-						control group in your markup, wrapping it in this 
+						If you want to enable a server-side fallback, you can do
+						that by authoring a native fallback using a radio
+						control group in your markup, wrapping it in this
 						component. If the component fails to boot, the radios
-						remain usable, and the form still has a value to submit.						
+						remain usable, and the form still has a value to submit.
 					</p>
 					<p>
 						Disable JavaScript and reload this page to compare
