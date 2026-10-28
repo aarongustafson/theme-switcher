@@ -1,21 +1,21 @@
 # `<theme-switcher>`
 
-A three-choice theme picker: System, Light, and Dark. The component generates
-native radios in the light DOM, sets `data-theme` on `<html>`, and remembers the
-choice in localStorage. You supply the page’s colors.
+A three-choice (or more) theme picker. The component sets `data-theme` on
+`<html>`, and remembers the choice in `localStorage`. You supply the 
+themes’ colors in your CSS.
 
-It extends
+This component extends
 [`<form-multi-switch>`](https://github.com/aarongustafson/form-multi-switch),
 with the same styling hooks and native keyboard behavior. You can also
-[supply your own radios](#authored-radios-and-forms) for a form that works before
-JavaScript loads.
+[supply your own radios](#authored-radios-and-forms) for a form that works 
+without JavaScript.
 
 [Project site](https://aarongustafson.github.io/theme-switcher/) ·
 [Live demos](https://aarongustafson.github.io/theme-switcher/demo/)
 
 ## Installation
 
-This is a draft; the npm package hasn’t been published yet. Once it is:
+Start by installing `<theme-switcher>` via npm:
 
 ```sh
 npm install @aarongustafson/theme-switcher
@@ -39,32 +39,30 @@ Use a bundler or an import map to resolve the `@aarongustafson/form-multi-switch
 dependency in a browser. The [local demo](demo/index.html) includes an import map;
 run `npm install` before serving the repository.
 
-## Use the generated control
+## Basic usage
 
-Set a group label; the component supplies the three choices:
+The most basic setup is to just use the component as-id:
 
 ```html
-<theme-switcher label="Color theme"></theme-switcher>
+<theme-switcher></theme-switcher>
 ```
 
-The component creates a fieldset, legend, and System, Light, and Dark radios,
-adds the default segmented-control styles, and gives the group a unique name.
-Before the element upgrades—or if JavaScript fails—this version has no controls.
-The page can still use your default CSS or a server-rendered `data-theme`.
+The component creates a `<fieldset>`, `<legend>`, and System, Light, and Dark
+radios, adds upgrades it using the the plumbing from `<form-multi-switch>`.
 
-Selecting Light or Dark sets an explicit preference. Selecting System keeps
-`data-theme="system"` while `resolvedTheme` follows the device’s current light
-or dark preference. All connected switchers on a page share that page’s theme.
+Note: Before booting—or if JavaScript fails—this version has no usable controls.
+You can [provide a markup-driven fallback](#authored-radios-and-forms) and
+upgrade it using this component though.
 
 ## Give the page its colors
 
-The component writes the selected value literally:
+The component writes the selected value to the `<html>` element as `data-theme`:
 
 ```html
 <html data-theme="system"></html>
 ```
 
-It doesn’t add a class, set inline colors, or choose a palette for you. Here’s
+It doesn’t add a `class`, set inline colors, or choose a palette for you. Here’s
 a small starting point using the browser’s system colors:
 
 ```css
@@ -86,49 +84,41 @@ body {
 }
 ```
 
-For your own palette, use `[data-theme='light']`, `[data-theme='dark']`, and a
-`prefers-color-scheme` query for `[data-theme='system']` (and pages without an
-explicit preference). Don’t let the media query override an explicit choice.
+When authoring your themes, use `[data-theme='light']` and `[data-theme='dark']`
+as your signals, then use a `prefers-color-scheme` query for 
+`[data-theme='system']` for the "no explicit preference" behavior. But don’t let 
+the media query override an explicit user choice.
 
 ### How preferences are loaded
 
-The first control restores the person’s saved site preference. If there isn’t
-one, it uses an explicit component default before falling back to their device
-preference. The order is:
+When booted, the component restores a user’s saved site preference before following
+their device preference. Author-provided defaults don’t override either. It uses:
 
 1. A valid localStorage preference, unless `storage="none"` is set.
 2. A valid cookie preference, if `cookie` is enabled and localStorage is missing,
    unreadable, or invalid.
-3. The component’s `value` attribute, including one set through
-   `configure({ value })` for generated controls.
-4. The checked authored radio, if the component wraps a radio group.
-5. `system`.
+3. `system`.
 
-With `storage="none"`, the first control skips both stores, not the author
-defaults.
+With `storage="none"`, the first control skips both stores and uses System.
 A value is valid if the control offers it. Each control must include `system`,
 `light`, and `dark`. Additional controls join the page’s current preference
 rather than loading an older saved choice over it.
 
 Selecting `system` saves the literal string `system`, not the device’s current
-light or dark preference. A saved System choice overrides every author default.
+light or dark preference.
 
-The component doesn’t read an existing `<html data-theme>` as a preference.
-It writes that attribute after choosing the theme. Storage lookup stops at the
-first valid result, without timestamps or comparison reads. Optional cookie
-mirroring can still write and verify the cookie.
+An existing `<html data-theme>` is an early rendering result, not a separate
+preference source. Any head script should use the same storage order and fall
+back to System. Preference lookup stops at the first valid result, without
+timestamps or comparison reads. Optional cookie mirroring can still write and
+verify the cookie.
 
-Wrapped markup still defines the choices, group name, and label. The component’s
-`value` is an exception: at startup it selects an existing radio, overriding the
-authored checked selection without changing its native reset default. An
-unsupported component value reports a configuration error; it never creates
-another choice. `configure()` remains available only for generated groups.
-
-Assignments to the `.value` property before initial theme setup are ignored and
-aren’t saved. To make an explicit runtime change, await `ready` first. During
-later reconfiguration or behavior loading, `.value` assignments are still queued
-and applied when the control is ready. Later `value` attribute changes on wrapped
-groups remain ignored; use the property to change their live selection.
+Checked radios and the generated `value` attribute keep their native reset
+defaults; they don’t choose the initial theme. Assignments to `.value` before
+initial theme setup are ignored and aren’t saved, including assignments in a
+behavior module’s first initializer. To make an explicit runtime change, await
+`ready` first. During later reconfiguration or behavior loading, `.value`
+assignments are still queued and applied when the control is ready.
 
 ## Configuration
 
@@ -139,7 +129,7 @@ groups remain ignored; use the property to change their live selection.
 | `light-label`    | `lightLabel`   | `Light`                         | Labels the default Light choice.                                                                                 |
 | `dark-label`     | `darkLabel`    | `Dark`                          | Labels the default Dark choice.                                                                                  |
 | `storage-key`    | `storageKey`   | `theme-switcher`                | Names the localStorage entry and, with a bare `cookie` attribute, the cookie too.                                |
-| `storage`        | `storage`      | `local`                         | Set `none` to skip both localStorage and cookie reads, writes, and storage events.                               |
+| `storage`        | `storage`      | `local`                         | Persistence is enabled by default. Set to `none` to disable all storage operations.                               |
 | `cookie`         | `cookie`       | None                            | Adds a cookie mirror and fallback. A bare attribute uses `storage-key`; a value supplies a separate cookie name. |
 | `cookie-max-age` | `cookieMaxAge` | `31536000`                      | Sets the cookie’s lifetime in seconds (one year by default).                                                     |
 | `name`           | `name`         | Unique generated name           | Names generated radios for form submission.                                                                      |
