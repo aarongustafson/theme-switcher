@@ -84,8 +84,14 @@ describe('package contracts', () => {
 			(_name, index, saved, cookie, expected) => {
 				const setAttribute = vi.fn();
 				const diagnostics = { warn: vi.fn() };
+				const readCookie = vi.fn(() => cookie);
 				runInNewContext(restorationScripts[index], {
-					document: { cookie, documentElement: { setAttribute } },
+					document: {
+						get cookie() {
+							return readCookie();
+						},
+						documentElement: { setAttribute },
+					},
 					localStorage: {
 						getItem: () => {
 							if (saved instanceof Error) throw saved;
@@ -101,6 +107,8 @@ describe('package contracts', () => {
 						'data-theme',
 						expected,
 					);
+				if (['system', 'light', 'dark'].includes(saved))
+					expect(readCookie).not.toHaveBeenCalled();
 				if (saved instanceof Error || cookie.includes('%broken'))
 					expect(diagnostics.warn).toHaveBeenCalled();
 			},
@@ -124,7 +132,7 @@ describe('package contracts', () => {
 		const template = document.createElement('template');
 		template.innerHTML = html;
 		const pairs = template.content.querySelectorAll('.code-demo-pair');
-		expect(pairs.length).toBeGreaterThanOrEqual(10);
+		expect(pairs.length).toBeGreaterThanOrEqual(9);
 		for (const pair of pairs) {
 			expect(pair.firstElementChild.tagName).toBe('PRE');
 			expect(pair.querySelector('.demo')).not.toBeNull();
@@ -148,7 +156,7 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
-	it('leads with generated controls and keeps authored forms as secondary reference', () => {
+	it('documents generated controls before the authored fallback', () => {
 		const readme = readFileSync(new URL('README.md', root), 'utf8');
 		expect(readme).toContain(
 			'](https://aarongustafson.github.io/theme-switcher/)',
@@ -156,14 +164,19 @@ describe('package contracts', () => {
 		expect(readme).toContain(
 			'](https://aarongustafson.github.io/theme-switcher/demo/)',
 		);
-		expect(readme).toContain('## Use the generated control');
-		expect(readme).toContain('## Authored radios and forms');
-		expect(readme.indexOf('## Use the generated control')).toBeLessThan(
-			readme.indexOf('## Authored radios and forms'),
+		expect(readme).toContain('## Basic usage');
+		expect(readme).toContain('## Progressive enhancement');
+		expect(readme).toContain('](#progressive-enhancement)');
+		expect(readme).not.toContain('](#authored-radios-and-forms)');
+		expect(readme.indexOf('## Basic usage')).toBeLessThan(
+			readme.indexOf('## Progressive enhancement'),
 		);
 		expect(readme.indexOf('## Configuration')).toBeLessThan(
-			readme.indexOf('## Authored radios and forms'),
+			readme.indexOf('## Progressive enhancement'),
 		);
+	});
+
+	it('leads the demo with generated controls and retains a native fallback', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(
 			new URL('demo/index.html', root),
@@ -171,18 +184,9 @@ describe('package contracts', () => {
 		);
 		const controls = template.content.querySelectorAll('theme-switcher');
 		expect(controls[0].id).toBe('default');
-		for (const id of [
-			'default',
-			'temporary',
-			'use-system',
-			'appearance-form',
-		]) {
-			expect(template.content.querySelector(`#${id}`), id).not.toBeNull();
-		}
-		const form = template.content.querySelector('#appearance-form');
 		expect(
-			form.closest('details')?.querySelector('summary').textContent,
-		).toContain('Authored radios and form submission');
+			template.content.querySelector('iframe[src="./fallback.html"]'),
+		).not.toBeNull();
 		expect(
 			template.content.querySelector(
 				'a[href="https://github.com/aarongustafson/form-multi-switch"]',
@@ -242,8 +246,10 @@ describe('package contracts', () => {
 		expect(
 			example.querySelector('pre code').textContent.replace(/\s+/g, ''),
 		).toContain(rule.replace(/\s+/g, ''));
-		expect(example.querySelector('p').textContent).toContain('author CSS');
-		expect(readme).toContain('not a built-in component option');
+		expect(example.querySelector('p').textContent).toContain(
+			'your own CSS',
+		);
+		expect(readme).toContain('use your own CSS to hide the legend');
 	});
 
 	it('provides a working refresh button below the cookie iframe', async () => {
@@ -261,8 +267,6 @@ describe('package contracts', () => {
 		expect(button.getAttribute('aria-controls')).toBe(frame.id);
 		expect(button.textContent.trim()).toBe('Refresh cookie example');
 		expect(button.disabled).toBe(true);
-		const temporary = template.content.querySelector('#temporary');
-		Object.defineProperty(temporary, 'ready', { value: Promise.resolve() });
 		const reload = vi.spyOn(frame, 'src', 'set');
 		const source = frame.src;
 		const code = readFileSync(
@@ -275,6 +279,35 @@ describe('package contracts', () => {
 			FormData,
 		});
 		expect(button.disabled).toBe(false);
+		const first = template.content.querySelector('#default');
+		first.dispatchEvent(
+			new CustomEvent('theme-switcher:change', {
+				detail: {
+					value: 'system',
+					resolvedTheme: 'dark',
+					source: 'user',
+				},
+			}),
+		);
+		expect(
+			template.content.querySelector('#theme-status').textContent,
+		).toBe('Preference: system. Resolved theme: dark. Source: user.');
+		for (const [type, message] of [
+			['theme-switcher:error', 'Theme diagnostic (storage): Blocked'],
+			[
+				'form-multi-switch:error',
+				'Enhancement failed (storage): Blocked',
+			],
+		]) {
+			template.content.dispatchEvent(
+				new CustomEvent(type, {
+					detail: { phase: 'storage', error: new Error('Blocked') },
+				}),
+			);
+			expect(
+				template.content.querySelector('#demo-errors').textContent,
+			).toBe(message);
+		}
 		button.click();
 		expect(reload).toHaveBeenCalledExactlyOnceWith(source);
 		reload.mockRestore();
@@ -337,9 +370,10 @@ describe('package contracts', () => {
 			expect(getItem).toHaveBeenCalledWith(
 				control.getAttribute('storage-key'),
 			);
-			if (saved === 'dark' || saved === 'system')
-				expect(setAttribute).toHaveBeenCalledWith('data-theme', saved);
-			else expect(setAttribute).not.toHaveBeenCalled();
+			expect(setAttribute).toHaveBeenCalledWith(
+				'data-theme',
+				saved === 'dark' || saved === 'system' ? saved : 'system',
+			);
 			if (saved instanceof Error) expect(warn).toHaveBeenCalled();
 			expect(
 				template.content.querySelector('a[href="./early.html"]'),

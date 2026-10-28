@@ -9,7 +9,7 @@
 				{
 					"kind": "class",
 					"name": "ThemeSwitcherElement",
-					"description": "A light-DOM tri-state theme preference control. Applies the literal preference to html[data-theme], persists it when enabled, and synchronizes controls and tabs. Authored radio markup wins over choices, name, label, and value attributes. Includes system, light, and dark; additional themes are author-defined.",
+					"description": "A light-DOM tri-state theme preference control. Initially restores a valid localStorage preference, then an optional cookie, then the component value attribute, then the checked authored radio, then System. Does not read an initial html[data-theme]. Applies the literal preference to html[data-theme], persists it when enabled, and synchronizes controls and tabs. Authored radio markup wins over choices, name, and label attributes. A supported component value overrides only the initial selection, not authored reset defaults. Includes system, light, and dark; additional themes are author-defined.",
 					"customElement": true,
 					"superclass": {
 						"name": "FormMultiSwitchElement",
@@ -71,7 +71,7 @@
 							"kind": "field",
 							"name": "value",
 							"type": { "text": "string | null" },
-							"description": "Current radio selection. Set a nonempty offered string to apply and persist a preference without changing the reset default. While pending, values are queued and validated against the prepared choices; ready rejects unsupported queued values. Unsupported ready-state assignments throw. Null before setup or when this control does not offer the active page theme, including on connection; assigning null throws."
+							"description": "Current radio selection. Assignments before initial theme setup are ignored. After initial readiness, set a nonempty offered string to apply and persist a preference without changing the reset default. During later pending states, values are queued and validated against the prepared choices; ready rejects unsupported queued values. Unsupported ready-state assignments throw. Null before setup or when this control does not offer the active page theme, including on connection; assigning null throws."
 						},
 						{
 							"kind": "field",
