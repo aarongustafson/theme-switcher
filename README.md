@@ -90,36 +90,45 @@ For your own palette, use `[data-theme='light']`, `[data-theme='dark']`, and a
 `prefers-color-scheme` query for `[data-theme='system']` (and pages without an
 explicit preference). Don’t let the media query override an explicit choice.
 
-### Choosing the initial preference
+### How preferences are loaded
 
-The first control restores the person’s saved site preference before following
-their device preference. Author-provided defaults don’t override either. It uses:
+The first control restores the person’s saved site preference. If there isn’t
+one, it uses an explicit component default before falling back to their device
+preference. The order is:
 
 1. A valid localStorage preference, unless `storage="none"` is set.
 2. A valid cookie preference, if `cookie` is enabled and localStorage is missing,
    unreadable, or invalid.
-3. `system`.
+3. The component’s `value` attribute, including one set through
+   `configure({ value })` for generated controls.
+4. The checked authored radio, if the component wraps a radio group.
+5. `system`.
 
-With `storage="none"`, the first control skips both stores and uses System.
+With `storage="none"`, the first control skips both stores, not the author
+defaults.
 A value is valid if the control offers it. Each control must include `system`,
 `light`, and `dark`. Additional controls join the page’s current preference
 rather than loading an older saved choice over it.
 
 Selecting `system` saves the literal string `system`, not the device’s current
-light or dark preference.
+light or dark preference. A saved System choice overrides every author default.
 
-An existing `<html data-theme>` is an early rendering result, not a separate
-preference source. Any head script should use the same storage order and fall
-back to System. Preference lookup stops at the first valid result, without
-timestamps or comparison reads. Optional cookie mirroring can still write and
-verify the cookie.
+The component doesn’t read an existing `<html data-theme>` as a preference.
+It writes that attribute after choosing the theme. Storage lookup stops at the
+first valid result, without timestamps or comparison reads. Optional cookie
+mirroring can still write and verify the cookie.
 
-Checked radios and the generated `value` attribute keep their native reset
-defaults; they don’t choose the initial theme. Assignments to `.value` before
-initial theme setup are ignored and aren’t saved, including assignments in a
-behavior module’s first initializer. To make an explicit runtime change, await
-`ready` first. During later reconfiguration or behavior loading, `.value`
-assignments are still queued and applied when the control is ready.
+Wrapped markup still defines the choices, group name, and label. The component’s
+`value` is an exception: at startup it selects an existing radio, overriding the
+authored checked selection without changing its native reset default. An
+unsupported component value reports a configuration error; it never creates
+another choice. `configure()` remains available only for generated groups.
+
+Assignments to the `.value` property before initial theme setup are ignored and
+aren’t saved. To make an explicit runtime change, await `ready` first. During
+later reconfiguration or behavior loading, `.value` assignments are still queued
+and applied when the control is ready. Later `value` attribute changes on wrapped
+groups remain ignored; use the property to change their live selection.
 
 ## Configuration
 

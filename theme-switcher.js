@@ -268,6 +268,15 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			name === 'value' &&
 			this._themeStarted &&
 			!this._themeConfiguring &&
+			this._themeSelection === null &&
+			super.state === 'ready' &&
+			this._themeAuthored()
+		)
+			this._themeInitialize();
+		if (
+			name === 'value' &&
+			this._themeStarted &&
+			!this._themeConfiguring &&
 			this.state === 'ready' &&
 			!this._themeAuthored()
 		) {
@@ -456,6 +465,13 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 				(peer) => peer !== this,
 			)?._themeSelection;
 			const initializing = this._themeSelection === null;
+			const configured = this.getAttribute('value');
+			if (
+				initializing &&
+				configured !== null &&
+				!this._themeSupports(configured)
+			)
+				throw new RangeError(`Unsupported theme: ${configured}`);
 			const joiningPage = initializing && active != null;
 			const saved =
 				!joiningPage && (initializing || this._themeReloadStorage)
@@ -508,7 +524,8 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			if (value === undefined) {
 				sharedPreference = joiningPage;
 				if (joiningPage) value = active;
-				else if (initializing) value = saved ?? 'system';
+				else if (initializing)
+					value = saved ?? configured ?? super.value ?? 'system';
 				else if (this._themeReloadStorage)
 					value = saved ?? super.value ?? this._themeSelection;
 				else value = super.value ?? this._themeSelection;

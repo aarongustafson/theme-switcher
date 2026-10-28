@@ -60,7 +60,7 @@ const tests = [
 		},
 	],
 	[
-		'Startup restores saved user choices or System instead of author defaults',
+		'Startup restores saved user choices before the component default',
 		async () => {
 			for (const saved of [null, 'dark', 'system']) {
 				fixture.replaceChildren();
@@ -74,9 +74,9 @@ const tests = [
 				fixture.append(control);
 				await control.ready;
 				assert(
-					control.value === (saved ?? 'system') &&
+					control.value === (saved ?? 'dark') &&
 						document.documentElement.dataset.theme ===
-							(saved ?? 'system') &&
+							(saved ?? 'dark') &&
 						localStorage.getItem(key) === saved,
 					'Startup author configuration replaced or persisted a user preference.',
 				);
@@ -96,7 +96,7 @@ const tests = [
 		},
 	],
 	[
-		'Authored checked defaults affect reset, not the initial user preference',
+		'Component value overrides authored selection without changing its reset default',
 		async () => {
 			await setup();
 			fixture.replaceChildren();
@@ -106,15 +106,16 @@ const tests = [
 			control.innerHTML = radios
 				.replace('value="system" checked', 'value="system"')
 				.replace('value="dark"', 'value="dark" checked');
+			control.setAttribute('value', 'light');
 			form.append(control);
 			fixture.append(form);
 			await control.ready;
 			assert(
-				control.value === 'system',
-				'An authored default forced the startup theme.',
+				control.value === 'light',
+				'The component value did not override the authored selection.',
 			);
 			assert(
-				new FormData(form).get('appearance') === 'system',
+				new FormData(form).get('appearance') === 'light',
 				'FormData did not use the initial user preference.',
 			);
 			form.reset();

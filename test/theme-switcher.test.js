@@ -84,18 +84,19 @@ describe('theme-switcher', () => {
 		);
 	});
 
-	it('preserves authored choices, names, labels, selection defaults, and ignores conflicting attributes', async () => {
+	it('preserves authored choices, names, and labels while allowing an initial value override', async () => {
 		const control = authored();
 		control.setAttribute('choices', 'invalid JSON');
 		control.setAttribute('name', 'ignored');
 		control.setAttribute('label', 'Ignored');
-		control.setAttribute('value', 'missing');
+		control.setAttribute('value', 'dark');
 		const input = control.querySelector('input');
 		await connect(control);
 		expect(control.querySelector('input')).toBe(input);
 		expect(control.name).toBe('appearance');
 		expect(control.label).toBe('Appearance');
-		expect(control.value).toBe('system');
+		expect(control.value).toBe('dark');
+		expect(input.defaultChecked).toBe(true);
 	});
 
 	it('uses saved preference before the root theme and authored selection', async () => {
@@ -113,14 +114,14 @@ describe('theme-switcher', () => {
 		expect(document.documentElement.dataset.theme).toBe('system');
 	});
 
-	it('uses System initially without changing authored reset defaults', async () => {
+	it('uses the authored checked default when no preference or component value is supplied', async () => {
 		const control = authored();
 		control.querySelector('input').defaultChecked = false;
 		control.querySelector('input[value="dark"]').defaultChecked = true;
 		const form = document.createElement('form');
 		document.body.append(form);
 		await connect(control, form);
-		expect(control.value).toBe('system');
+		expect(control.value).toBe('dark');
 		expect(
 			control.querySelector('input[value="dark"]').defaultChecked,
 		).toBe(true);
@@ -131,7 +132,7 @@ describe('theme-switcher', () => {
 	});
 
 	it.each(['generated', 'configured'])(
-		'uses System initially without changing the %s reset default',
+		'uses the %s component default without changing its reset default',
 		async (mode) => {
 			const control = document.createElement('theme-switcher');
 			if (mode === 'configured')
@@ -145,7 +146,7 @@ describe('theme-switcher', () => {
 			const form = document.createElement('form');
 			document.body.append(form);
 			await connect(control, form);
-			expect(control.value).toBe('system');
+			expect(control.value).toBe('dark');
 			expect(control.getAttribute('value')).toBe('dark');
 			expect(
 				control.querySelector('input[value="dark"]').defaultChecked,
@@ -155,6 +156,56 @@ describe('theme-switcher', () => {
 			expect(control.value).toBe('dark');
 		},
 	);
+
+	it.each([null, 'light', 'system'])(
+		'uses saved %s before the component value, then the authored default',
+		async (saved) => {
+			if (saved !== null) localStorage.setItem('theme-switcher', saved);
+			const form = document.createElement('form');
+			document.body.append(form);
+			const control = authored();
+			control.setAttribute('value', 'dark');
+			await connect(control, form);
+			expect(control.value).toBe(saved ?? 'dark');
+			expect(localStorage.getItem('theme-switcher')).toBe(saved);
+			expect(
+				control.querySelector('input[value="system"]').defaultChecked,
+			).toBe(true);
+			form.reset();
+			await afterReset();
+			expect(control.value).toBe('system');
+		},
+	);
+
+	it('rejects an unsupported authored-group override and recovers when corrected', async () => {
+		const control = authored();
+		control.setAttribute('value', 'missing');
+		document.body.append(control);
+		await expect(control.ready).rejects.toThrow(/Unsupported theme/);
+		expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+		expect(localStorage.getItem('theme-switcher')).toBeNull();
+		control.setAttribute('value', 'dark');
+		await control.ready;
+		expect(control.value).toBe('dark');
+		expect(control.state).toBe('ready');
+	});
+
+	it('keeps wrapped groups immutable through configure and ignores later authored value attributes', async () => {
+		const control = authored();
+		control.setAttribute('value', 'dark');
+		await connect(control);
+		expect(control.value).toBe('dark');
+		expect(() =>
+			control.configure({
+				name: 'replacement',
+				label: 'Replacement',
+				choices: themesForTest(),
+				value: 'light',
+			}),
+		).toThrow(/authored fieldset/);
+		control.setAttribute('value', 'light');
+		expect(control.value).toBe('dark');
+	});
 
 	it('applies API updates, persists literal system, and emits theme details without base interaction events', async () => {
 		const control = await connect();
@@ -477,8 +528,8 @@ describe('theme-switcher', () => {
 		[null, 'dark', 'local', 'dark'],
 		['missing', 'dark', 'local', 'dark'],
 		[null, 'system', 'local', 'system'],
-		[null, 'missing', 'local', 'system'],
-		['dark', 'dark', 'none', 'system'],
+		[null, 'missing', 'local', 'light'],
+		['dark', 'dark', 'none', 'light'],
 	])(
 		'restores %s before cookie %s with storage %s',
 		async (saved, cookie, storage, expected) => {

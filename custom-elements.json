@@ -9,7 +9,7 @@
 				{
 					"kind": "class",
 					"name": "ThemeSwitcherElement",
-					"description": "A light-DOM tri-state theme preference control. Initially restores a valid localStorage preference, then an optional cookie, then System; author defaults do not override the initial user preference. Applies the literal preference to html[data-theme], persists it when enabled, and synchronizes controls and tabs. Authored radio markup wins over choices, name, label, and value attributes. Includes system, light, and dark; additional themes are author-defined.",
+					"description": "A light-DOM tri-state theme preference control. Initially restores a valid localStorage preference, then an optional cookie, then the component value attribute, then the checked authored radio, then System. Does not read an initial html[data-theme]. Applies the literal preference to html[data-theme], persists it when enabled, and synchronizes controls and tabs. Authored radio markup wins over choices, name, and label attributes. A supported component value overrides only the initial selection, not authored reset defaults. Includes system, light, and dark; additional themes are author-defined.",
 					"customElement": true,
 					"superclass": {
 						"name": "FormMultiSwitchElement",
