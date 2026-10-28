@@ -60,6 +60,73 @@ const tests = [
 		},
 	],
 	[
+		'Startup restores saved user choices or System instead of author defaults',
+		async () => {
+			for (const saved of [null, 'dark', 'system']) {
+				fixture.replaceChildren();
+				localStorage.removeItem(key);
+				if (saved !== null) localStorage.setItem(key, saved);
+				document.documentElement.dataset.theme = 'dark';
+				const control = document.createElement('theme-switcher');
+				control.storageKey = key;
+				control.setAttribute('value', 'dark');
+				control.value = 'light';
+				fixture.append(control);
+				await control.ready;
+				assert(
+					control.value === (saved ?? 'system') &&
+						document.documentElement.dataset.theme ===
+							(saved ?? 'system') &&
+						localStorage.getItem(key) === saved,
+					'Startup author configuration replaced or persisted a user preference.',
+				);
+				assert(
+					control.querySelector('input[value="dark"]').defaultChecked,
+					'Startup changed the generated reset default.',
+				);
+				if (control.value === 'system')
+					assert(
+						control.resolvedTheme ===
+							(matchMedia('(prefers-color-scheme: dark)').matches
+								? 'dark'
+								: 'light'),
+						'System did not follow the device preference.',
+					);
+			}
+		},
+	],
+	[
+		'Authored checked defaults affect reset, not the initial user preference',
+		async () => {
+			await setup();
+			fixture.replaceChildren();
+			const form = document.createElement('form');
+			const control = document.createElement('theme-switcher');
+			control.storageKey = key;
+			control.innerHTML = radios
+				.replace('value="system" checked', 'value="system"')
+				.replace('value="dark"', 'value="dark" checked');
+			form.append(control);
+			fixture.append(form);
+			await control.ready;
+			assert(
+				control.value === 'system',
+				'An authored default forced the startup theme.',
+			);
+			assert(
+				new FormData(form).get('appearance') === 'system',
+				'FormData did not use the initial user preference.',
+			);
+			form.reset();
+			await afterReset();
+			assert(
+				control.value === 'dark' &&
+					localStorage.getItem(key) === 'dark',
+				'Native reset lost the authored default.',
+			);
+		},
+	],
+	[
 		'Authored names, form submission, and canceled native reset',
 		async () => {
 			const control = await setup(radios);
@@ -460,8 +527,8 @@ const tests = [
 				'Upgrade discarded the localized group label.',
 			);
 			assert(
-				control.value === 'dark',
-				'Upgrade discarded a queued preference.',
+				control.value === 'system',
+				'An early API assignment overrode the initial user preference.',
 			);
 		},
 	],

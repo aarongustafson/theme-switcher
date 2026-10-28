@@ -41,7 +41,8 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 	/** Current selection; null before setup or if this control lacks the page theme. */
 	get value(): string | null;
 	/** Apply and save an offered theme without changing the reset default.
-	 * While pending, queue it for validation against the prepared choices; ready
+	 * Assignments before initial theme setup are ignored. After initial readiness,
+	 * pending assignments queue for validation against the prepared choices; ready
 	 * rejects an unsupported queued value. Ready-state assignments throw instead.
 	 */
 	set value(value: string);

@@ -455,10 +455,10 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 			const active = [...peers].find(
 				(peer) => peer !== this,
 			)?._themeSelection;
-			const joiningPage = this._themeSelection === null && active != null;
+			const initializing = this._themeSelection === null;
+			const joiningPage = initializing && active != null;
 			const saved =
-				!joiningPage &&
-				(this._themeSelection === null || this._themeReloadStorage)
+				!joiningPage && (initializing || this._themeReloadStorage)
 					? this._themeRead()
 					: undefined;
 			if (
@@ -472,8 +472,9 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 					this._themeReport(error, 'storage');
 				}
 			}
-			let value = this._themePendingValue;
-			const persistPendingValue = this._themePersistPendingValue;
+			let value = initializing ? undefined : this._themePendingValue;
+			const persistPendingValue =
+				!initializing && this._themePersistPendingValue;
 			let sharedPreference = value !== undefined && !persistPendingValue;
 			const pendingStorage = this._themePendingStorage;
 			let applyStorage = false;
@@ -506,25 +507,13 @@ export class ThemeSwitcherElement extends FormMultiSwitchElement {
 				throw new RangeError(`Unsupported theme: ${value}`);
 			if (value === undefined) {
 				sharedPreference = joiningPage;
-				value = joiningPage
-					? active
-					: this._themeReloadStorage
-						? (saved ?? super.value ?? this._themeSelection)
-						: this._themeSelection !== null
-							? (super.value ?? this._themeSelection)
-							: saved;
-				if (
-					this._themeSelection !== null &&
-					value === this._themeSelection
-				)
+				if (joiningPage) value = active;
+				else if (initializing) value = saved ?? 'system';
+				else if (this._themeReloadStorage)
+					value = saved ?? super.value ?? this._themeSelection;
+				else value = super.value ?? this._themeSelection;
+				if (!initializing && value === this._themeSelection)
 					sharedPreference = true;
-				if (!sharedPreference && !this._themeSupports(value))
-					value =
-						this.ownerDocument.documentElement.getAttribute(
-							'data-theme',
-						);
-				if (!sharedPreference && !this._themeSupports(value))
-					value = super.value ?? 'system';
 				if (!sharedPreference && !this._themeSupports(value))
 					value = 'system';
 			}

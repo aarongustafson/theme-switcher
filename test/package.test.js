@@ -84,8 +84,14 @@ describe('package contracts', () => {
 			(_name, index, saved, cookie, expected) => {
 				const setAttribute = vi.fn();
 				const diagnostics = { warn: vi.fn() };
+				const readCookie = vi.fn(() => cookie);
 				runInNewContext(restorationScripts[index], {
-					document: { cookie, documentElement: { setAttribute } },
+					document: {
+						get cookie() {
+							return readCookie();
+						},
+						documentElement: { setAttribute },
+					},
 					localStorage: {
 						getItem: () => {
 							if (saved instanceof Error) throw saved;
@@ -101,6 +107,8 @@ describe('package contracts', () => {
 						'data-theme',
 						expected,
 					);
+				if (['system', 'light', 'dark'].includes(saved))
+					expect(readCookie).not.toHaveBeenCalled();
 				if (saved instanceof Error || cookie.includes('%broken'))
 					expect(diagnostics.warn).toHaveBeenCalled();
 			},
@@ -337,9 +345,10 @@ describe('package contracts', () => {
 			expect(getItem).toHaveBeenCalledWith(
 				control.getAttribute('storage-key'),
 			);
-			if (saved === 'dark' || saved === 'system')
-				expect(setAttribute).toHaveBeenCalledWith('data-theme', saved);
-			else expect(setAttribute).not.toHaveBeenCalled();
+			expect(setAttribute).toHaveBeenCalledWith(
+				'data-theme',
+				saved === 'dark' || saved === 'system' ? saved : 'system',
+			);
 			if (saved instanceof Error) expect(warn).toHaveBeenCalled();
 			expect(
 				template.content.querySelector('a[href="./early.html"]'),
