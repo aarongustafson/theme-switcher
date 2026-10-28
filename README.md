@@ -1,13 +1,13 @@
 # `<theme-switcher>`
 
 A three-choice (or more) theme picker. The component sets `data-theme` on
-`<html>`, and remembers the choice in `localStorage`. You supply the 
+`<html>` and remembers the choice in `localStorage`. You supply the
 themes’ colors in your CSS.
 
 This component extends
 [`<form-multi-switch>`](https://github.com/aarongustafson/form-multi-switch),
 with the same styling hooks and native keyboard behavior. You can also
-[supply your own radios](#authored-radios-and-forms) for a form that works 
+[supply your own radios](#progressive-enhancement) for a form that works
 without JavaScript.
 
 [Project site](https://aarongustafson.github.io/theme-switcher/) ·
@@ -41,18 +41,18 @@ run `npm install` before serving the repository.
 
 ## Basic usage
 
-The most basic setup is to just use the component as-id:
+The most basic setup is to just use the component as-is:
 
 ```html
 <theme-switcher></theme-switcher>
 ```
 
 The component creates a `<fieldset>`, `<legend>`, and System, Light, and Dark
-radios, adds upgrades it using the the plumbing from `<form-multi-switch>`.
+radios, then enhances them using `<form-multi-switch>`.
 
 Note: Before booting—or if JavaScript fails—this version has no usable controls.
-You can [provide a markup-driven fallback](#authored-radios-and-forms) and
-upgrade it using this component though.
+You can [provide a markup-driven fallback](#progressive-enhancement) and
+enhance it with this component.
 
 ## Give the page its colors
 
@@ -85,60 +85,55 @@ body {
 ```
 
 When authoring your themes, use `[data-theme='light']` and `[data-theme='dark']`
-as your signals, then use a `prefers-color-scheme` query for 
-`[data-theme='system']` for the "no explicit preference" behavior. But don’t let 
+as your signals, then use a `prefers-color-scheme` query for
+`[data-theme='system']` for the "no explicit preference" behavior. But don’t let
 the media query override an explicit user choice.
 
 ### How preferences are loaded
 
-When booted, the component restores a user’s saved site preference before following
-their device preference. Author-provided defaults don’t override either. It uses:
+When booted, the first instance of this component restores the user’s saved theme
+preference. If there isn’t one, it uses the authored default before falling back
+to their system preference. The order is:
 
 1. A valid localStorage preference, unless `storage="none"` is set.
 2. A valid cookie preference, if `cookie` is enabled and localStorage is missing,
    unreadable, or invalid.
-3. `system`.
+3. The component’s `value` attribute, including one set through
+   `configure({ value })` for generated controls.
+4. The checked authored radio, if the component wraps a radio group.
+5. `system`.
 
-With `storage="none"`, the first control skips both stores and uses System.
+With `storage="none"`, the first control skips both stores, not the author
+defaults.
 A value is valid if the control offers it. Each control must include `system`,
-`light`, and `dark`. Additional controls join the page’s current preference
-rather than loading an older saved choice over it.
+`light`, and `dark`.
 
 Selecting `system` saves the literal string `system`, not the device’s current
-light or dark preference.
+light or dark preference. A saved System choice overrides every author default.
 
-An existing `<html data-theme>` is an early rendering result, not a separate
-preference source. Any head script should use the same storage order and fall
-back to System. Preference lookup stops at the first valid result, without
-timestamps or comparison reads. Optional cookie mirroring can still write and
-verify the cookie.
-
-Checked radios and the generated `value` attribute keep their native reset
-defaults; they don’t choose the initial theme. Assignments to `.value` before
-initial theme setup are ignored and aren’t saved, including assignments in a
-behavior module’s first initializer. To make an explicit runtime change, await
-`ready` first. During later reconfiguration or behavior loading, `.value`
-assignments are still queued and applied when the control is ready.
+The component doesn’t read `<html data-theme>` as a preference; it writes the
+result there. Additional controls join the page’s current preference rather than
+loading their own saved choice.
 
 ## Configuration
 
-| Attribute        | Property       | Default                         | What it does                                                                                                     |
-| ---------------- | -------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `label`          | `label`        | `Theme`                         | Names a generated group. Use the legend with authored markup.                                                    |
-| `system-label`   | `systemLabel`  | `System`                        | Labels the default System choice.                                                                                |
-| `light-label`    | `lightLabel`   | `Light`                         | Labels the default Light choice.                                                                                 |
-| `dark-label`     | `darkLabel`    | `Dark`                          | Labels the default Dark choice.                                                                                  |
-| `storage-key`    | `storageKey`   | `theme-switcher`                | Names the localStorage entry and, with a bare `cookie` attribute, the cookie too.                                |
-| `storage`        | `storage`      | `local`                         | Persistence is enabled by default. Set to `none` to disable all storage operations.                               |
-| `cookie`         | `cookie`       | None                            | Adds a cookie mirror and fallback. A bare attribute uses `storage-key`; a value supplies a separate cookie name. |
-| `cookie-max-age` | `cookieMaxAge` | `31536000`                      | Sets the cookie’s lifetime in seconds (one year by default).                                                     |
-| `name`           | `name`         | Unique generated name           | Names generated radios for form submission.                                                                      |
-| `value`          | `value`        | `system` for generated controls | Attribute sets the generated initial/reset default; property changes the current preference.                     |
-| `choices`        | —              | System, Light, Dark             | JSON choices using the base component’s format.                                                                  |
-| `disabled`       | `disabled`     | `false`                         | Disables the control.                                                                                            |
-| `required`       | `required`     | `false`                         | Makes the native radio selection required.                                                                       |
-| `icon-only`      | `iconOnly`     | `false`                         | Visually hides label text; you supply the icons.                                                                 |
-| `script`         | `script`       | None                            | Loads an optional behavior module before enhancement completes.                                                  |
+| Attribute        | Property       | Default                         | What it does                                                                                                                              |
+| ---------------- | -------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `label`          | `label`        | `Theme`                         | Names a generated group. Use the legend with authored markup.                                                                             |
+| `system-label`   | `systemLabel`  | `System`                        | Labels the default System choice.                                                                                                         |
+| `light-label`    | `lightLabel`   | `Light`                         | Labels the default Light choice.                                                                                                          |
+| `dark-label`     | `darkLabel`    | `Dark`                          | Labels the default Dark choice.                                                                                                           |
+| `storage-key`    | `storageKey`   | `theme-switcher`                | Names the localStorage entry and, with a bare `cookie` attribute, the cookie too.                                                         |
+| `storage`        | `storage`      | `local`                         | Persistence is enabled by default. Set to `none` to disable all storage operations.                                                       |
+| `cookie`         | `cookie`       | None                            | Adds a cookie mirror and fallback. A bare attribute uses `storage-key`; a value supplies a separate cookie name.                          |
+| `cookie-max-age` | `cookieMaxAge` | `31536000`                      | Sets the cookie’s lifetime in seconds (one year by default).                                                                              |
+| `name`           | `name`         | Unique generated name           | Names generated radios for form submission.                                                                                               |
+| `value`          | `value`        | `system` for generated controls | Attribute supplies an initial choice and, for generated radios, the reset default; property changes the current preference after `ready`. |
+| `choices`        | —              | System, Light, Dark             | JSON choices using the base component’s format.                                                                                           |
+| `disabled`       | `disabled`     | `false`                         | Disables the control.                                                                                                                     |
+| `required`       | `required`     | `false`                         | Makes the native radio selection required.                                                                                                |
+| `icon-only`      | `iconOnly`     | `false`                         | Visually hides label text; you supply the icons.                                                                                          |
+| `script`         | `script`       | None                            | Loads an optional behavior module before enhancement completes.                                                                           |
 
 See the
 [`<form-multi-switch>` API](https://github.com/aarongustafson/form-multi-switch#attributes-and-properties)
@@ -146,7 +141,7 @@ for inherited configuration, choice formats, methods, and behavior modules.
 
 ### Translate the labels
 
-The three choice-label attributes apply only to the default generated choices.
+The three choice `*-label` attributes apply only to the default generated choices.
 Translate `label` too, or supply all your own labels:
 
 ```html
@@ -159,7 +154,7 @@ Translate `label` too, or supply all your own labels:
 ></theme-switcher>
 ```
 
-Language and direction inherit from surrounding markup. With
+Language and direction are inherited from the surrounding markup. With
 `<html lang="ar" dir="rtl">`, the component and its native controls use RTL
 without their own `dir` attribute. You can also scope language and direction to
 a wrapper, or set them directly on the component to override its context:
@@ -175,10 +170,8 @@ a wrapper, or set them directly on the component to override its context:
 </div>
 ```
 
-Setting `lang` identifies the language; it doesn’t translate the labels or set
-the text direction for you. Supply the translated labels and use `dir` where
-needed. The [live demos](https://aarongustafson.github.io/theme-switcher/demo/)
-include Arabic labels with decorative CSS icons.
+The [live demo](https://aarongustafson.github.io/theme-switcher/demo/)
+includes an Arabic instance with decorative CSS icons.
 
 ### Extra themes
 
@@ -196,17 +189,10 @@ Include the three standard values and add your own:
 ></theme-switcher>
 ```
 
-You can use authored radios or inherited `configure()` instead. Choice labels
-are text, not HTML. Set `color-scheme` and the palette for custom themes in your
-CSS; `resolvedTheme` returns the custom value without guessing whether it’s light
-or dark.
+You can use authored radios or manually `configure()` instead. Choice labels
+are text, not HTML.
 
-Give controls on the same page the same available themes. A control that doesn’t
-offer the current page theme has no radio selected, keeps that theme in
-`resolvedTheme`, and reports a nonfatal `synchronization` error. Connecting or
-relabeling that control doesn’t replace the page’s preference.
-
-### Changing the preference from JavaScript
+### Advanced usage
 
 ```js
 const switcher = document.querySelector('theme-switcher');
@@ -221,22 +207,18 @@ It applies the theme, saves it when persistence is enabled, and synchronizes
 other connected controls. It doesn’t change the radio’s form-reset default or
 emit the base component’s user-interaction events.
 
-Before setup finishes, assignments are queued rather than applied to the old
-radios. This lets you call `configure()` and then set `.value` to a newly added
-theme. Await `ready` to confirm it was applied: unsupported queued values reject
-that promise. Once ready, an unsupported value throws from the setter.
+Assignments to `.value` before initial theme setup are ignored. During later
+reconfiguration or behavior loading, assignments are queued until the control
+is ready.
 
-`ready` resolves after enhancement and theme setup. Read it again after
-reconfiguration. Ordinary markup changes are observed automatically; inherited
-`refresh()` is available when you need to force reinitialization. Directly
-setting a radio’s `.checked` property doesn’t fire a browser event; use
-`switcher.value` to change the page preference from code.
+---
 
-An optional `script` uses the
-[base component’s module contract](https://github.com/aarongustafson/form-multi-switch#behavior-modules):
+An optional `script` attribute piggybacks on the [base component’s module
+contract](https://github.com/aarongustafson/form-multi-switch#behavior-modules):
 `initialize(element, { signal })`, optionally returning a synchronous cleanup
-function. That initializer runs before theme setup; await `ready` outside the
-initializer if you need the applied preference. Don’t await `ready` inside it.
+function. That initializer runs before theme setup. Await
+`ready` outside the initializer if you need the applied preference. Don’t await
+`ready` inside it.
 
 ## Save and synchronize preferences
 
@@ -257,55 +239,31 @@ needs the preference:
 <theme-switcher storage="none" cookie></theme-switcher>
 ```
 
-In JavaScript, set `.cookie = true` to use `storageKey`, a string to choose a
-cookie name, or `false`/`null` to turn cookie backing off. Reading `.cookie`
-returns the effective name, or `null` when it isn’t configured.
+Cookie settings are also accessible imperatively via the element’s `cookie`
+and `storageKey` properties.
 
-On startup, a valid localStorage value wins over the cookie. A valid cookie is
-the fallback when localStorage is missing, contains an unsupported theme, or
+On startup, a valid `localStorage` value wins over the cookie. A valid cookie is
+the fallback when `localStorage` is missing, contains an unsupported theme, or
 isn’t available. When a saved preference is restored with cookie backing
-enabled, both stores are brought into agreement. Subsequent selections update
-both independently: if either fails, the other can still save the preference.
-Failures emit a storage diagnostic.
+enabled, the component tries to align both stores. User changes update both
+independently: if either fails, the other can still save the preference.
+Failures emit diagnostic errors.
 
 Cookies use `Path=/`, `SameSite=Lax`, and `Secure` on HTTPS, with no `Domain`.
 Cookie names must be valid cookie-name tokens, and `cookie-max-age` must be a
 positive integer. The cookie is readable by JavaScript, so it can’t be
-`HttpOnly`. Don’t store anything sensitive in it. Your server can validate its
-value against your themes and render the initial `<html data-theme>` before any
-JavaScript runs. The early script above can still apply a newer local preference.
+`HttpOnly`. Your server can validate its value against your themes and render
+the initial `<html data-theme>` before any JavaScript runs.
 
-Controls on the same document synchronize without writing each other’s storage.
-Use consistent storage keys, cookie settings, and available themes across them.
-`storage="none"` doesn’t isolate a control from the page’s theme or erase an
-existing saved preference.
-
-Other tabs update through the browser’s `storage` event. Removing the saved
-preference, or clearing storage, selects System. Unrelated keys and sessionStorage
-events are ignored. Cookie changes are checked through Cookie Store events
-where supported, and when the page regains focus or becomes visible. External
-cookie changes also update localStorage; deleting the cookie selects and saves
-System. Unsupported saved values and blocked storage produce
-diagnostics; blocked storage doesn’t prevent theme changes.
-
-Storage events received while a control is regenerating or loading behavior are
-applied when it’s ready. An explicitly queued `.value` takes precedence. Saving
-a cookie also updates matching controls’ change-detection snapshots without
-writing their localStorage entries.
-
-Changing `storage-key` or `cookie` on an initialized control, or turning
-persistence back on, reads the saved preference for that key. Without a saved
-value, the current selection is retained. Newly connected controls join the
-current page preference instead of restoring an older saved value over it.
-
-Disconnecting a control removes its media-query, storage, reset, and synchronization
-listeners. It doesn’t revert the page or delete the saved preference. Reconnecting
-sets the control up again.
+With localStorage enabled, other tabs using the same key update through the
+browser’s `storage` event. Storage events received while a control is
+regenerating or booting are applied when the component is ready.
 
 ## Restore a saved choice before first paint
 
-The component can’t apply a saved preference before its module loads. If that
-would cause a flash on your site, put a small script before your stylesheets:
+The component can’t apply a saved preference before its module loads. That could
+cause a disruptive flash when loading. To avoid that, place a small inline
+`<script>` before you load stylesheets in the `<head>`:
 
 ```html
 <script>
@@ -320,7 +278,7 @@ would cause a flash on your site, put a small script before your stylesheets:
 </script>
 ```
 
-If you’ve enabled cookie backing, read that cookie when localStorage doesn’t
+If you’ve enabled cookie backing, read that cookie when `localStorage` doesn’t
 provide a valid choice:
 
 ```html
@@ -354,16 +312,16 @@ provide a valid choice:
 </script>
 ```
 
-Use your cookie’s name for `prefix` if it differs from the localStorage key.
+Use your cookie’s name for `prefix` if it differs from the `localStorage` key.
 Both snippets leave any server-rendered `data-theme` alone when no valid saved
-value is available. For `storage="none"`, omit the restoration script too.
+value is available.
 
-Keep the storage key and allowed themes aligned with your control. With a
-Content Security Policy, authorize this script with your usual nonce or hash.
+Keep the storage key and allowed themes aligned with your configuration. With a
+Content Security Policy, authorize this script with a nonce or hash.
 
-## Authored radios and forms
+## Progressive enhancement
 
-Supply a fieldset when you need controls that work before JavaScript loads.
+Supply a `<fieldset>` when you need controls that work with or without JavaScript.
 The browser provides radio selection and form submission; the component adds
 theme changes, persistence, synchronization, and segmented-control styles.
 
@@ -380,33 +338,25 @@ theme changes, persistence, synchronization, and segmented-control styles.
 </theme-switcher>
 ```
 
-Without JavaScript, these radios don’t change the page’s theme. Put them in a
-form with server-side handling if you need to apply a submitted choice without
-the component. Use a different radio `name` for each group in the same form.
+Without JavaScript, these radios still support selection and form submission,
+but they don’t change the page’s theme. A server can apply the submitted
+preference on the next page load.
 
-An authored fieldset takes precedence over `choices`, `name`, `label`, and
-`value` attributes on the component. Those attributes are ignored, even if
-they’re invalid. Authored labels also take precedence over `system-label`,
-`light-label`, and `dark-label`. Include `system`, `light`, and `dark` values.
+Your radios define the choices, group name, and legend. The component’s initial
+`value` attribute can select an existing radio without changing its reset default.
+Unsupported values report a configuration error. Later `value` attribute changes
+are ignored; use `.value` after `ready` to change the selection.
 
-Both authored and generated radios participate in native forms. Submission
-includes the selected radio’s name/value; set `name` on a generated control
-when you need a predictable field name. Reset restores the authored checked
-default (or generated `value` default), then applies and saves that preference.
-Reconciliation runs in a task after the browser restores the radios, including
-when someone activates a Reset button. If no radio is checked after reset, the
-component selects System. A canceled reset leaves the theme alone.
+Other behavior and persistence attributes still apply. `configure()` is only
+for generated groups.
 
-Reset also works when the form and controls share a shadow tree, including radios
-associated with a form through their `form` attribute.
-
-The [form demo](https://aarongustafson.github.io/theme-switcher/demo/) shows
-submission and reset alongside a no-module fallback.
+The [fallback demo](demo/fallback.html) shows native form submission without
+loading the component module.
 
 ## Events
 
 All component events bubble. Listen for `theme-switcher:change` when you need
-theme behavior rather than just a radio interaction:
+access to theme switching behavior rather than radio control interaction:
 
 ```js
 document.addEventListener('theme-switcher:change', ({ detail }) => {
@@ -420,30 +370,21 @@ document.addEventListener('theme-switcher:change', ({ detail }) => {
 | `theme-switcher:ready`  | `value`, `resolvedTheme`                                                     |
 | `theme-switcher:error`  | `error`, `phase`                                                             |
 
-Change sources are `initial`, `user`, `api`, `attribute`, `configuration`, `reset`,
-`storage`, `sync`, and `system`. Initialization emits a change. Repeatedly applying
-the same preference and resolved theme doesn’t. Each synchronized control emits
-its own event, so use a listener on one control if you only need one notification.
+Change sources include `initial`, `user`, `api`, `attribute`, `configuration`,
+`reset`, `storage`, `sync`, and `system`. Initialization emits a change.
+Repeatedly applying the same preference and resolved theme doesn’t. Each
+synchronized control emits its own event, so use a listener on one control if you
+only need one notification.
 
-Error phases are `configuration`, `storage`, and `synchronization`. Diagnostics
-also go to `console.error`. Theme configuration failures reject `ready` and set
-`state` to `error`; storage and synchronization errors are nonfatal. Inherited
-enhancement/module failures use `form-multi-switch:error`.
+Error phases include `configuration`, `storage`, and `synchronization`.
+Diagnostics also go to `console.error`. Theme configuration failures reject
+`ready` and set `state` to `error`; storage and synchronization errors are
+nonfatal. Inherited enhancement/module failures use `form-multi-switch:error`.
 
-While configuration is invalid, the native radios remain usable for forms, but
-they don’t change the page theme or storage. API value assignments throw the
-configuration error until you correct it.
+## Style it to match your site
 
-The inherited `form-multi-switch:activate`, `:change`, `:ready`, and `:error`
-events retain their
-[base meanings](https://github.com/aarongustafson/form-multi-switch#events).
-In particular, the base change event reports
-user interaction, not API, storage, or system updates.
-
-## Make it look like your site
-
-Default control styles load automatically in the `form-multi-switch` cascade
-layer. Your unlayered CSS can override them:
+The default component styles load automatically in the `<form-multi-switch>`
+cascade layer. Your unlayered CSS can override them:
 
 ```css
 theme-switcher {
@@ -459,14 +400,19 @@ The inherited CSS custom properties are `--multi-switch-border`, `--multi-switch
 `--multi-switch-selected-color`, `--multi-switch-focus-color`,
 `--multi-switch-radius`, and `--multi-switch-padding`.
 
-Use `[data-multi-switch-choice]` for segments, `[data-value='dark']` for a
-particular theme, and `[data-selected]`, `[data-disabled]`, `[data-first]`, and
-`[data-last]` for state and endpoints. The [demos](demo/index.html) show text,
-CSS icons, icon-only controls, and a pill treatment. See the
+Use
+
+- `[data-multi-switch-choice]` to address all segments;
+- `[data-value='{theme}']` for a particular theme’s segment; and
+- `[data-selected]`, `[data-disabled]`, `[data-first]`, and
+  `[data-last]` for state and endpoints.
+
+The [demos](demo/index.html) show text, CSS icons, icon-only controls, and a
+pill treatment. See the
 [base component’s styling reference](https://github.com/aarongustafson/form-multi-switch#styling)
 for shared defaults and hooks.
 
-### Load styles under a Content Security Policy
+### Loading styles under a Content Security Policy
 
 The base component injects a stylesheet. A strict `style-src` policy must allow
 it, or you can load the base package’s external stylesheet instead. Give the
@@ -484,21 +430,20 @@ Copy the base package’s `form-multi-switch.css` export to your chosen URL.
 
 ## Accessibility
 
-Keep text labels even when you hide them visually with `icon-only`. Decorative
-SVGs should have `aria-hidden="true"`; CSS masks don’t need extra markup. Supply
-icons that remain distinguishable in forced-colors mode. Don’t hide the entire
-label or remove its accessible text.
+Maintain text labels even when you hide them visually with `icon-only`. Decorative
+SVGs should have `aria-hidden="true"`. Supply icons that remain distinguishable in
+forced-colors mode. Don’t hide the entire `<label>` or remove its accessible text.
 
-Native radios provide Tab, arrow-key, and Space interaction, checked state, and
-form behavior. The default focus outline uses `:focus-visible`. Preserve clear
-visual context, sufficient contrast, and a clear selected state when you restyle it.
+Native radios provide <kbd>Tab</kbd>, arrow-key, and <kbd>Space</kbd> interaction,
+checked state, and form behavior. The default focus outline uses `:focus-visible`.
+Preserve clear visual context, sufficient contrast, and a clear selected state when
+you restyle it.
 
-### Hide the legend visually
+### Hiding the legend visually
 
 If the surrounding content already makes the control’s purpose clear, you can
-hide the legend visually while keeping its text as the radio group’s accessible
-name. `hide-legend` is an author-defined class, not a built-in component option.
-It only has an effect when you supply the CSS below:
+use your own CSS to hide the legend visually while keeping its text as the radio
+group’s accessible name. For example:
 
 ```html
 <theme-switcher class="hide-legend" label="Color theme"></theme-switcher>
@@ -519,9 +464,9 @@ theme-switcher.hide-legend legend {
 ```
 
 This works with a generated legend or your own authored `<legend>`. Keep a
-meaningful `label` for generated markup, or text in your authored legend. Don’t
-remove the legend or use `hidden`, `aria-hidden="true"`, `display: none`, or
-`visibility: hidden` to hide it from assistive technology.
+meaningful `label` for generated markup, or text in your authored `<legend>`.
+Don’t remove the `<legend>` or use `hidden`, `aria-hidden="true"`,
+`display: none`, or `visibility: hidden` to hide it from assistive technology.
 
 ## Browser support
 
