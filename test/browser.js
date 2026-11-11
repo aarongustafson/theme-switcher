@@ -360,6 +360,18 @@ const tests = [
 				document.documentElement.dataset.theme === 'dark',
 				'The storage event did not apply the theme.',
 			);
+			control.disabled = true;
+			await control.ready;
+			peer.value = 'light';
+			await until(() => control.value === 'light');
+			assert(
+				control.querySelector('fieldset').disabled &&
+					control.querySelector('input[value="light"]').checked &&
+					document.documentElement.dataset.theme === 'light',
+				'A cross-tab preference did not update the disabled control.',
+			);
+			control.disabled = false;
+			await control.ready;
 			control.value = 'light';
 			await until(() => peer.value === 'light');
 			assert(
@@ -694,21 +706,16 @@ const tests = [
 		},
 	],
 	[
-		'Selected decorative icons use a contrasting system foreground',
+		'Selected decorative icons follow the contrasting label foreground',
 		async () => {
 			const control = await setup();
 			control.classList.add('icons');
 			control.value = 'dark';
 			const selected = control.querySelector('[data-value="dark"]');
-			const probe = document.createElement('span');
-			probe.style.cssText =
-				'background: HighlightText; forced-color-adjust: none;';
-			fixture.append(probe);
 			const icon = getComputedStyle(selected, '::before');
 			assert(
-				icon.backgroundColor ===
-					getComputedStyle(probe).backgroundColor,
-				'The selected icon is not HighlightText.',
+				icon.backgroundColor === getComputedStyle(selected).color,
+				'The selected icon does not match the label foreground.',
 			);
 			assert(
 				icon.backgroundColor !==

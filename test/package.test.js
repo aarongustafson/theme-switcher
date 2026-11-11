@@ -1,4 +1,15 @@
-import { readFileSync, existsSync } from 'node:fs';
+import {
+	readFileSync,
+	existsSync,
+	mkdtempSync,
+	mkdirSync,
+	copyFileSync,
+	writeFileSync,
+	rmSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { cwd } from 'node:process';
 import { runInNewContext } from 'node:vm';
@@ -35,8 +46,65 @@ describe('package contracts', () => {
 			}
 		}
 		expect(pkg.dependencies['@aarongustafson/form-multi-switch']).toBe(
-			'^0.1.0',
+			'^1.0.0',
 		);
+	});
+
+	it('pins the CDN example to the stable base and current theme-switcher version', () => {
+		const demo = readFileSync(new URL('demo/unpkg.html', root), 'utf8');
+		expect(demo).toContain(
+			'https://unpkg.com/@aarongustafson/form-multi-switch@1.0.0/index.js',
+		);
+		expect(demo).toContain(
+			`https://unpkg.com/@aarongustafson/theme-switcher@${pkg.version}/define.js`,
+		);
+		expect(readFileSync(new URL('demo/esm.html', root), 'utf8')).toContain(
+			`https://esm.sh/${pkg.name}@${pkg.version}/theme-switcher.js`,
+		);
+	});
+
+	it('updates and stages both versioned CDN demos without changing the base pin', () => {
+		const directory = mkdtempSync(join(tmpdir(), 'theme-version-test-'));
+		try {
+			mkdirSync(join(directory, 'scripts'));
+			mkdirSync(join(directory, 'demo'));
+			writeFileSync(
+				join(directory, 'package.json'),
+				JSON.stringify({
+					type: 'module',
+					name: pkg.name,
+					version: '9.8.7',
+				}),
+			);
+			copyFileSync(
+				new URL('scripts/update-demo-versions.js', root),
+				join(directory, 'scripts/update-demo-versions.js'),
+			);
+			for (const file of ['esm.html', 'unpkg.html'])
+				copyFileSync(
+					new URL(`demo/${file}`, root),
+					join(directory, 'demo', file),
+				);
+			execFileSync(process.execPath, [
+				join(directory, 'scripts/update-demo-versions.js'),
+			]);
+			for (const file of ['esm.html', 'unpkg.html']) {
+				const demo = readFileSync(
+					join(directory, 'demo', file),
+					'utf8',
+				);
+				expect(demo).toContain(`${pkg.name}@9.8.7/`);
+			}
+			expect(
+				readFileSync(join(directory, 'demo/unpkg.html'), 'utf8'),
+			).toContain('@aarongustafson/form-multi-switch@1.0.0/index.js');
+			expect(pkg.scripts.version).toBe(
+				'node scripts/update-demo-versions.js && git add demo/esm.html demo/unpkg.html',
+			);
+			expect(pkg.scripts.postversion).toBe('git push --follow-tags');
+		} finally {
+			rmSync(directory, { recursive: true, force: true });
+		}
 	});
 
 	const restorationScripts = [
@@ -194,12 +262,14 @@ describe('package contracts', () => {
 		).not.toBeNull();
 	});
 
-	it('uses HighlightText for the selected icon in forced-colors mode', () => {
+	it('keeps forced-color paint overrides on masks that inherit label colors', () => {
 		const css = readFileSync(new URL('demo/styles.css', root), 'utf8');
-		const selectedIcon = css.match(
-			/\.icons \[data-selected\]::before \{[^}]+\}/,
+		const mask = css.match(
+			/@media \(forced-colors: active\) \{\s*(\.icons \[data-multi-switch-choice\]::before \{[^}]+\})/,
 		)?.[0];
-		expect(selectedIcon).toContain('background: HighlightText;');
+		expect(mask).toContain('background: currentColor;');
+		expect(mask).toContain('forced-color-adjust: none;');
+		expect(css).not.toContain('.icons [data-selected]::before');
 	});
 
 	it('demonstrates Arabic icon labels with inherited language and direction', () => {
@@ -413,6 +483,26 @@ describe('package contracts', () => {
 			...declaration.events,
 		]) {
 			expect(types).toContain(name);
+		}
+	});
+
+	it('describes the actual inherited CSS defaults and focus hooks', () => {
+		const base = JSON.parse(
+			readFileSync(
+				new URL(
+					'node_modules/@aarongustafson/form-multi-switch/custom-elements.json',
+					root,
+				),
+				'utf8',
+			),
+		)
+			.modules.flatMap(({ declarations = [] }) => declarations)
+			.find(({ name }) => name === 'FormMultiSwitchElement');
+		const properties = manifest.modules[0].declarations[0].cssProperties;
+		for (const property of base.cssProperties) {
+			expect(
+				properties.find(({ name }) => name === property.name),
+			).toMatchObject({ name: property.name, default: property.default });
 		}
 	});
 });

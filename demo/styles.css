@@ -169,12 +169,9 @@ theme-switcher.hide-legend legend {
 
 @media (forced-colors: active) {
 	.icons [data-multi-switch-choice]::before {
-		background: ButtonText;
+		background: currentColor;
+		/* Preserve the mask's paint, not the label's colors. */
 		forced-color-adjust: none;
-	}
-
-	.icons [data-selected]::before {
-		background: HighlightText;
 	}
 }
 

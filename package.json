@@ -55,6 +55,7 @@
 		"test": "vitest",
 		"test:ui": "vitest --ui",
 		"test:run": "vitest run",
+		"test:browser": "playwright test",
 		"test:coverage": "vitest run --coverage",
 		"test:types": "tsc --noEmit --strict --target es2022 --module nodenext --moduleResolution nodenext test/types.ts",
 		"lint": "npm run lint:eslint && npm run lint:prettier",
@@ -63,13 +64,14 @@
 		"format:eslint": "eslint . --fix",
 		"lint:prettier": "prettier \"**/*.{js,ts,css,html,md}\" --check --ignore-path .gitignore",
 		"format:prettier": "prettier \"**/*.{js,ts,css,html,md}\" --write --ignore-path .gitignore",
-		"version": "node scripts/update-demo-versions.js && git add demo/esm.html",
+		"version": "node scripts/update-demo-versions.js && git add demo/esm.html demo/unpkg.html",
 		"postversion": "git push --follow-tags"
 	},
 	"dependencies": {
-		"@aarongustafson/form-multi-switch": "^0.1.0"
+		"@aarongustafson/form-multi-switch": "^1.0.0"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.65.0",
 		"@open-wc/eslint-config": "^13.1.0",
 		"@testing-library/dom": "^10.4.2",
 		"@testing-library/user-event": "^14.6.7",
