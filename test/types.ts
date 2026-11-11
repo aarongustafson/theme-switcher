@@ -18,6 +18,13 @@ const configuration: MultiSwitchConfiguration = {
 };
 base.configure(configuration);
 control.value = 'dark';
+control.disabled = true;
+control.readOnly = true;
+control.addEventListener('form-multi-switch:change', (event) => {
+	const previous: string | null = event.detail.previousValue;
+	const value: string | null = event.detail.value;
+	void [previous, value];
+});
 control.storageKey = undefined;
 control.systemLabel = 'Device';
 control.lightLabel = null;

@@ -170,7 +170,7 @@
 						{
 							"name": "--multi-switch-border",
 							"description": "Inherited segment border color.",
-							"default": "ButtonBorder"
+							"default": "CanvasText"
 						},
 						{
 							"name": "--multi-switch-background",
@@ -184,18 +184,28 @@
 						},
 						{
 							"name": "--multi-switch-selected-background",
-							"description": "Inherited selected background.",
-							"default": "Highlight"
+							"description": "Inherited selected background. Defaults to Canvas in forced colors, with a persistent underline.",
+							"default": "CanvasText"
 						},
 						{
 							"name": "--multi-switch-selected-color",
-							"description": "Inherited selected text color.",
-							"default": "HighlightText"
+							"description": "Inherited selected text color. Defaults to CanvasText in forced colors.",
+							"default": "Canvas"
 						},
 						{
 							"name": "--multi-switch-focus-color",
-							"description": "Inherited focus-visible outline color.",
-							"default": "Highlight"
+							"description": "Inherited focus-visible outline color, used when --multi-switch-outline is unset. Forced colors use CanvasText.",
+							"default": "CanvasText"
+						},
+						{
+							"name": "--multi-switch-outline",
+							"description": "Inherited complete outer outline for a radio matching :focus-visible. Overrides --multi-switch-focus-color and applies in forced colors.",
+							"default": "3px solid var(--multi-switch-focus-color, CanvasText)"
+						},
+						{
+							"name": "--multi-switch-outline-offset",
+							"description": "Inherited outer focus outline offset, including forced colors.",
+							"default": "3px"
 						},
 						{
 							"name": "--multi-switch-radius",

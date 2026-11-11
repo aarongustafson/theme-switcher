@@ -375,6 +375,143 @@ describe('theme-switcher', () => {
 		expect(document.documentElement.dataset.theme).toBe('system');
 	});
 
+	describe.each(['authored', 'generated'])('%s disabled controls', (mode) => {
+		const create = () =>
+			mode === 'authored'
+				? authored()
+				: document.createElement('theme-switcher');
+
+		it('restores a saved preference while initially disabled', async () => {
+			localStorage.setItem('theme-switcher', 'dark');
+			const control = create();
+			control.disabled = true;
+			await connect(control);
+			expect(control.value).toBe('dark');
+			expect(control.querySelector('input[value="dark"]').checked).toBe(
+				true,
+			);
+			expect(
+				control
+					.querySelector('[data-value="dark"]')
+					.hasAttribute('data-selected'),
+			).toBe(true);
+			expect(document.documentElement.dataset.theme).toBe('dark');
+			expect(localStorage.getItem('theme-switcher')).toBe('dark');
+		});
+
+		it('preserves selection, persistence, reset defaults, and event baselines when disabled', async () => {
+			const form = document.createElement('form');
+			document.body.append(form);
+			const control = create();
+			control.cookie = true;
+			await connect(control, form);
+			control.value = 'dark';
+			const themeChange = vi.fn();
+			const baseChange = vi.fn();
+			control.addEventListener('theme-switcher:change', themeChange);
+			control.addEventListener('form-multi-switch:change', baseChange);
+			control.disabled = true;
+			await control.ready;
+			expect(control.querySelector('fieldset').disabled).toBe(true);
+			expect(control.value).toBe('dark');
+			expect(document.documentElement.dataset.theme).toBe('dark');
+			expect(localStorage.getItem('theme-switcher')).toBe('dark');
+			expect(document.cookie).toContain('theme-switcher=dark');
+			expect(themeChange).not.toHaveBeenCalled();
+			expect(baseChange).not.toHaveBeenCalled();
+			// Inherited disabled styling and form exclusion need a real browser.
+			form.reset();
+			await afterReset();
+			expect(control.value).toBe('system');
+			expect(
+				control.querySelector('input[value="system"]').defaultChecked,
+			).toBe(true);
+			expect(document.documentElement.dataset.theme).toBe('system');
+			expect(localStorage.getItem('theme-switcher')).toBe('system');
+			expect(document.cookie).toContain('theme-switcher=system');
+			expect(themeChange).toHaveBeenCalledOnce();
+			expect(themeChange.mock.calls[0][0].detail).toMatchObject({
+				value: 'system',
+				previousValue: 'dark',
+				source: 'reset',
+			});
+			expect(baseChange).not.toHaveBeenCalled();
+			control.disabled = false;
+			await control.ready;
+			expect(control.value).toBe('system');
+			expect(themeChange).toHaveBeenCalledOnce();
+			control.querySelector('input[value="light"]').click();
+			expect(baseChange).toHaveBeenCalledOnce();
+			expect(baseChange.mock.calls[0][0].detail).toMatchObject({
+				value: 'light',
+				previousValue: 'system',
+			});
+		});
+
+		it('accepts peer and API preferences while disabled without interaction events', async () => {
+			const control = await connect(create());
+			const peer = await connect();
+			control.value = 'dark';
+			control.disabled = true;
+			await control.ready;
+			const themeChange = vi.fn();
+			const baseChange = vi.fn();
+			control.addEventListener('theme-switcher:change', themeChange);
+			control.addEventListener('form-multi-switch:change', baseChange);
+			peer.value = 'light';
+			expect(control.value).toBe('light');
+			expect(control.querySelector('fieldset').disabled).toBe(true);
+			expect(themeChange.mock.calls[0][0].detail).toMatchObject({
+				value: 'light',
+				previousValue: 'dark',
+				source: 'sync',
+			});
+			control.value = 'system';
+			media.matches = true;
+			media.dispatchEvent(new Event('change'));
+			expect(control.value).toBe('system');
+			expect(control.resolvedTheme).toBe('dark');
+			expect(peer.value).toBe('system');
+			expect(document.documentElement.dataset.theme).toBe('system');
+			expect(localStorage.getItem('theme-switcher')).toBe('system');
+			expect(baseChange).not.toHaveBeenCalled();
+			expect(
+				themeChange.mock.calls.map(([event]) => event.detail.source),
+			).toEqual(['sync', 'api', 'system']);
+		});
+
+		it('allows leaving, but not clicking back to, a disabled checked choice', async () => {
+			const control = create();
+			if (mode === 'authored')
+				control.querySelector('input[value="dark"]').disabled = true;
+			else
+				control.setAttribute(
+					'choices',
+					JSON.stringify(
+						themesForTest().map((choice) => ({
+							...choice,
+							disabled: choice.value === 'dark',
+						})),
+					),
+				);
+			localStorage.setItem('theme-switcher', 'dark');
+			await connect(control);
+			const dark = control.querySelector('input[value="dark"]');
+			const light = control.querySelector('input[value="light"]');
+			expect(control.value).toBe('dark');
+			light.click();
+			expect(control.value).toBe('light');
+			dark.click();
+			expect(control.value).toBe('light');
+			expect(localStorage.getItem('theme-switcher')).toBe('light');
+			control.value = 'dark';
+			expect(dark.checked).toBe(true);
+			expect(dark.disabled).toBe(true);
+			expect(control.value).toBe('dark');
+			expect(document.documentElement.dataset.theme).toBe('dark');
+		});
+	});
+
 	it('does not change the theme for a canceled form reset', async () => {
 		const form = document.createElement('form');
 		document.body.append(form);

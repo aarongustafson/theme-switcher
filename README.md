@@ -142,7 +142,8 @@ assignments are still queued and applied when the control is ready.
 | `name`           | `name`         | Unique generated name           | Names generated radios for form submission.                                                                                               |
 | `value`          | `value`        | `system` for generated controls | Attribute supplies an initial choice and, for generated radios, the reset default; property changes the current preference after `ready`. |
 | `choices`        | —              | System, Light, Dark             | JSON choices using the base component’s format.                                                                                           |
-| `disabled`       | `disabled`     | `false`                         | Disables the control.                                                                                                                     |
+| `disabled`       | `disabled`     | `false`                         | Prevents user input and form submission without clearing the checked choice.                                                              |
+| `readonly`       | `readOnly`     | `false`                         | Prevents user changes while keeping the checked choice enabled and included in form submission.                                           |
 | `required`       | `required`     | `false`                         | Makes the native radio selection required.                                                                                                |
 | `icon-only`      | `iconOnly`     | `false`                         | Visually hides label text; you supply the icons.                                                                                          |
 | `script`         | `script`       | None                            | Loads an optional behavior module before enhancement completes.                                                                           |
@@ -150,6 +151,13 @@ assignments are still queued and applied when the control is ready.
 See the
 [`<form-multi-switch>` API](https://github.com/aarongustafson/form-multi-switch#attributes-and-properties)
 for inherited configuration, choice formats, methods, and behavior modules.
+
+Disabling a control preserves its selection and the applied page theme.
+Re-enabling it restores native form submission of the checked value. An
+individually disabled checked choice stays selected until you choose an enabled
+alternative; you can’t return to the disabled choice until it’s enabled again.
+API assignments and peer or storage updates can still change a disabled or
+read-only control’s preference.
 
 ### Translate the labels
 
@@ -396,7 +404,13 @@ nonfatal. Inherited enhancement/module failures use `form-multi-switch:error`.
 ## Style it to match your site
 
 The default component styles load automatically in the `<form-multi-switch>`
-cascade layer. Your unlayered CSS can override them:
+cascade layer.
+
+The 1.x base defaults to Canvas text on a CanvasText selected background.
+In forced colors, it uses CanvasText on Canvas with an underline to mark the
+selection. Automatic color adjustment remains enabled.
+
+Your unlayered CSS can override them:
 
 ```css
 theme-switcher {
@@ -410,7 +424,14 @@ theme-switcher {
 The inherited CSS custom properties are `--multi-switch-border`, `--multi-switch-background`,
 `--multi-switch-color`, `--multi-switch-selected-background`,
 `--multi-switch-selected-color`, `--multi-switch-focus-color`,
+`--multi-switch-outline`, `--multi-switch-outline-offset`,
 `--multi-switch-radius`, and `--multi-switch-padding`.
+
+Set `--multi-switch-outline` to replace the entire focus outline and
+`--multi-switch-outline-offset` to adjust its spacing. These apply to the
+label marked `[data-focus]` when its radio matches `:focus-visible`, including
+in forced colors. Without an override, the outline is solid, 3px wide, and
+offset by 3px.
 
 Use
 
@@ -494,12 +515,21 @@ npm run test:run
 npm run test:types
 npm run lint
 npm run test:coverage
+npx playwright install chromium firefox webkit
+npm run test:browser
 python3 -m http.server 8765
 ```
 
 Open `/demo/` for examples and `/test/browser.html` for browser-only checks.
 Add `?native-reset` to the browser-check URL and activate **Reset appearance**
 when it appears to test a real reset-button activation.
+
+`test:browser` runs the existing browser checks and upgrade regressions in
+Chromium, Firefox, and WebKit without a separate server. It covers keyboard and
+focus behavior, disabled/read-only controls, form reset and submission,
+same-document and cross-document synchronization, and the no-JavaScript
+fallback. Forced-color emulation runs in Chromium only; Windows Contrast themes
+and manual assistive-technology testing still need real-platform verification.
 
 ## License
 
