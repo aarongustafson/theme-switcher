@@ -1,5 +1,11 @@
 # `<theme-switcher>`
 
+[![npm version](https://img.shields.io/npm/v/@aarongustafson/theme-switcher.svg)](https://www.npmjs.com/package/@aarongustafson/theme-switcher)
+[![CI status](https://img.shields.io/github/actions/workflow/status/aarongustafson/theme-switcher/ci.yml?branch=main&label=CI)](https://github.com/aarongustafson/theme-switcher/actions/workflows/ci.yml)
+[![Minified + gzipped size](https://img.shields.io/bundlejs/size/@aarongustafson/theme-switcher?format=minzip&label=min%2Bgzip)](https://bundlejs.com/?q=@aarongustafson/theme-switcher)
+[![License](https://img.shields.io/npm/l/@aarongustafson/theme-switcher)](https://github.com/aarongustafson/theme-switcher/blob/main/LICENSE)
+[![Type definitions](https://img.shields.io/npm/types/@aarongustafson/theme-switcher)](https://github.com/aarongustafson/theme-switcher/blob/main/theme-switcher.d.ts)
+
 A three-choice (or more) theme picker. The component sets `data-theme` on
 `<html>` and remembers the choice in `localStorage`. You supply the
 themes’ colors in your CSS.
