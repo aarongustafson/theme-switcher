@@ -63,6 +63,7 @@ code {
 }
 
 .demo-section {
+	margin-trim: block;
 	margin-block: 2rem;
 	padding: 1.5rem;
 	background: ButtonFace;
