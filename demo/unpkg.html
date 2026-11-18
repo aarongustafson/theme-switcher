@@ -5,14 +5,48 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Load theme-switcher from unpkg</title>
 		<link rel="stylesheet" href="./styles.css" />
+		<link rel="stylesheet" href="./demo-shell.css" />
 	</head>
-	<body>
-		<h1>Load from unpkg</h1>
-		<p>
-			This draft isn’t on npm yet. After publication, use an import map to
-			resolve the base package, then load the registration module:
-		</p>
-		<pre><code>&lt;script type="importmap"&gt;
+	<body data-syntax-theme="github">
+		<a class="skip-link" href="#main">Skip to examples</a>
+		<header>
+			<p class="eyebrow">Web component / unpkg</p>
+			<h1>&lt;theme-switcher&gt;</h1>
+			<nav aria-label="Component resources">
+				<a
+					href="https://github.com/aarongustafson/theme-switcher/blob/main/README.md"
+					>Read the README</a
+				>
+				<a href="https://github.com/aarongustafson/theme-switcher"
+					>View on GitHub</a
+				>
+				<a href="./index.html">All examples</a>
+				<a href="./esm.html">esm.sh example</a>
+			</nav>
+		</header>
+		<main id="main" tabindex="-1">
+			<p
+				id="microlighter-status"
+				class="enhancement-status"
+				role="status"
+				hidden
+			></p>
+
+			<p>
+				This draft isn’t on npm yet. After publication, use an import
+				map to resolve the base package, then load the registration
+				module:
+			</p>
+			<micro-lighter
+				class="code-panel"
+				language="html"
+				controls="copy"
+				data-label="HTML"
+			>
+				<pre
+					aria-label="Example code 1"
+					tabindex="0"
+				><code>&lt;script type="importmap"&gt;
 {
   "imports": {
     <mark>"@aarongustafson/form-multi-switch":
@@ -25,9 +59,18 @@
 &lt;/script&gt;
 <mark>&lt;theme-switcher label="Color theme"&gt;</mark>
 <mark>&lt;/theme-switcher&gt;</mark></code></pre>
-		<p>
-			<a href="./">Use the working local demos</a> while reviewing the
-			draft.
-		</p>
+			</micro-lighter>
+			<p>
+				<a href="./">Use the working local demos</a> while reviewing the
+				draft.
+			</p>
+		</main>
+		<footer>
+			<p>
+				Made with ❤️ by
+				<a href="https://github.com/aarongustafson">Aaron Gustafson</a>.
+			</p>
+		</footer>
+		<script type="module" src="./code-examples.js"></script>
 	</body>
 </html>

@@ -202,7 +202,10 @@ describe('package contracts', () => {
 		const pairs = template.content.querySelectorAll('.code-demo-pair');
 		expect(pairs.length).toBeGreaterThanOrEqual(9);
 		for (const pair of pairs) {
-			expect(pair.firstElementChild.tagName).toBe('PRE');
+			expect(pair.firstElementChild.tagName).toBe('MICRO-LIGHTER');
+			expect(
+				pair.firstElementChild.querySelector(':scope > pre > code'),
+			).not.toBeNull();
 			expect(pair.querySelector('.demo')).not.toBeNull();
 		}
 		for (const frame of template.content.querySelectorAll('iframe')) {
