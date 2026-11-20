@@ -4,8 +4,8 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>&lt;theme-switcher&gt; Web Component Demo</title>
-		<link rel="stylesheet" href="./styles.css" />
 		<link rel="stylesheet" href="./demo-shell.css" />
+		<link rel="stylesheet" href="./styles.css" />
 		<script type="importmap">
 			{
 				"imports": {
@@ -15,7 +15,7 @@
 		</script>
 		<script type="module" src="./demo.js"></script>
 	</head>
-	<body data-syntax-theme="github">
+	<body data-demo-page="full" data-syntax-theme="github">
 		<a class="skip-link" href="#main">Skip to examples</a>
 		<header>
 			<p class="eyebrow">Web component / Examples</p>
@@ -53,6 +53,9 @@
 		<main id="main" tabindex="-1">
 			<p
 				id="microlighter-status"
+				data-loading-message="Loading optional code highlighting…"
+				data-failure-message="Code remains readable and selectable. Optional highlighting and Copy controls could not load."
+				data-theme-failure-message="Code highlighting and Copy controls are available, but the syntax theme could not load."
 				class="enhancement-status"
 				role="status"
 				hidden
@@ -103,7 +106,7 @@ body {
   color: CanvasText;
 }</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<theme-switcher
 								id="default"
 								storage-key="theme-switcher-demo"
@@ -157,7 +160,7 @@ body {
   --multi-switch-selected-color: #fff;
 }</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<theme-switcher
 								class="pill"
 								label="Site appearance"
@@ -218,7 +221,7 @@ theme-switcher.hide-legend legend {
   border: 0;
 }</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<theme-switcher
 								class="icons"
 								label="Icons and text"
@@ -267,7 +270,7 @@ theme-switcher.hide-legend legend {
   <mark>&lt;/theme-switcher&gt;</mark>
 &lt;/div&gt;</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<theme-switcher
 								lang="fr"
 								label="Thème"
@@ -324,7 +327,7 @@ theme-switcher.hide-legend legend {
   --page-color: #493921;
 }</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<iframe
 								src="./extra.html"
 								title="Separate reading palette example with a Sepia theme"
@@ -373,7 +376,7 @@ theme-switcher.hide-legend legend {
   cookie="server-theme"&gt;</mark>
 <mark>&lt;/theme-switcher&gt;</mark></code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<iframe
 								id="cookie-demo"
 								src="./cookie.html"
@@ -429,7 +432,7 @@ theme-switcher.hide-legend legend {
 /* No loading-state CSS hides the inputs.
    No module means no page-theme behavior. */</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<iframe
 								src="./fallback.html"
 								title="Native theme radios without the component module"
@@ -463,7 +466,7 @@ theme-switcher.hide-legend legend {
 await <mark>control.ready</mark>;
 <mark>control.value</mark> = 'dark';</code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<iframe
 								src="./storage.html"
 								title="Theme control with intentionally unavailable storage"
@@ -517,7 +520,7 @@ await <mark>control.ready</mark>;
   label="Saved appearance"&gt;</mark>
 <mark>&lt;/theme-switcher&gt;</mark></code></pre>
 						</micro-lighter>
-						<div class="demo">
+						<div class="demo" data-demo-label="Live example">
 							<iframe
 								src="./early.html"
 								title="Saved theme restored in the head before styles load"

@@ -1,0 +1,10 @@
+{
+	"index.html": "full",
+	"esm.html": "full",
+	"unpkg.html": "full",
+	"extra.html": "embedded",
+	"early.html": "embedded",
+	"storage.html": "embedded",
+	"cookie.html": "embedded",
+	"fallback.html": "embedded"
+}

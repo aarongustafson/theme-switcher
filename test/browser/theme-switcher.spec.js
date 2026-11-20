@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { test, expect } from '@playwright/test';
+import { expectNativeFocus, serveDemo } from './demo-fixture.js';
 
 const paths = [
 	'theme-switcher.js',
@@ -10,6 +11,8 @@ const paths = [
 	'test/peer.html',
 	'test/observe.js',
 	'demo/styles.css',
+	'demo/demo-shell.css',
+	'demo/embedded.css',
 	'demo/system.svg',
 	'demo/light.svg',
 	'demo/dark.svg',
@@ -37,13 +40,15 @@ test.beforeEach(async ({ page }) => {
 				contentType: 'text/html',
 				body: `<!doctype html><html lang="en"><head>
 					<meta name="viewport" content="width=device-width, initial-scale=1">
+					<link rel="stylesheet" href="/demo/demo-shell.css">
 					<link rel="stylesheet" href="/demo/styles.css">
+					<link rel="stylesheet" href="/demo/embedded.css">
 					${url.searchParams.has('external') ? '<link id="form-multi-switch-styles" rel="stylesheet" href="/node_modules/@aarongustafson/form-multi-switch/form-multi-switch.css">' : ''}
 					<script type="importmap">{"imports": {
 						"@aarongustafson/form-multi-switch": "/node_modules/@aarongustafson/form-multi-switch/index.js"
 					}}</script>
 					<script type="module" src="/define.js"></script>
-				</head><body><form><fieldset id="ancestor"><legend>Theme controls</legend>
+				</head><body data-demo-page="embedded"><form><fieldset id="ancestor"><legend>Theme controls</legend>
 					<theme-switcher id="control" name="appearance" label="Reading appearance"
 						storage-key="theme-switcher-browser" style="inline-size:30rem">
 						${
@@ -90,6 +95,31 @@ async function mount(page, authored, external) {
 	});
 	return page.locator('#control');
 }
+
+test('shared defaults preserve the selected page theme and isolated reading palette', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	await page.goto('http://code-demo.test/demo/index.html');
+	const control = page.locator('#default');
+	await control.getByRole('radio', { name: 'Dark', exact: true }).focus();
+	await page.keyboard.press('Space');
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+	await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark');
+	const frame = page.frameLocator('iframe[src="./extra.html"]');
+	await frame.getByRole('radio', { name: 'Sepia', exact: true }).focus();
+	await page.keyboard.press('Space');
+	await expect(frame.locator('html')).toHaveAttribute('data-theme', 'sepia');
+	await expect(frame.locator('body')).toHaveCSS(
+		'background-color',
+		'rgb(246, 236, 214)',
+	);
+	await expect(frame.locator('body')).toHaveCSS('color', 'rgb(73, 57, 33)');
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+	await expectNativeFocus(page.locator('button[aria-controls]').first());
+	await page.unrouteAll({ behavior: 'wait' });
+});
 
 async function state(page) {
 	return page.evaluate(() => {

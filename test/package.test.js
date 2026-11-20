@@ -24,6 +24,14 @@ const manifest = JSON.parse(
 const pkg = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'));
 
 describe('package contracts', () => {
+	it('trims block-edge margins inside demo sections', () => {
+		expect(
+			readFileSync(new URL('demo/demo-shell.css', root), 'utf8'),
+		).toMatch(
+			/\.demo-section(?:,\s*\.api-reference)?\s*\{[^}]*\bmargin-trim:\s*block;/,
+		);
+	});
+
 	it('keeps class-only exports separate from guarded registration', async () => {
 		const registration = vi.spyOn(customElements, 'define');
 		const { ThemeSwitcherElement: exported } = await import('../index.js');
