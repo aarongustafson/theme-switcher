@@ -4,7 +4,9 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>Unavailable storage example</title>
+		<link rel="stylesheet" href="./demo-shell.css" />
 		<link rel="stylesheet" href="./styles.css" />
+		<link rel="stylesheet" href="./embedded.css" />
 		<script type="importmap">
 			{
 				"imports": {
@@ -14,7 +16,7 @@
 		</script>
 		<script type="module" src="./storage.js"></script>
 	</head>
-	<body>
+	<body data-demo-page="embedded">
 		<theme-switcher label="Theme with blocked storage"></theme-switcher>
 		<output role="status"
 			>Waiting for the simulated storage restriction.</output
