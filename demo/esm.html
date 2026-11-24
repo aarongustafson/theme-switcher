@@ -35,20 +35,24 @@
 				hidden
 			></p>
 
-			<p>
-				This draft isn’t on npm yet. After publication, esm.sh can
-				resolve the base dependency for you:
-			</p>
-			<micro-lighter
-				class="code-panel"
-				language="html"
-				controls="copy"
-				data-label="HTML"
-			>
-				<pre
-					aria-label="Example code 1"
-					tabindex="0"
-				><code>&lt;script type="module"&gt;
+			<section id="esm-postpublication">
+				<h2>Postpublication import example</h2>
+				<p>
+					This page displays source only. It doesn’t execute the
+					import or render a live picker. After the referenced
+					versions are published, esm.sh can bundle the base
+					dependency:
+				</p>
+				<micro-lighter
+					class="code-panel"
+					language="html"
+					controls="copy"
+					data-label="HTML"
+				>
+					<pre
+						aria-label="Example code 1"
+						tabindex="0"
+					><code>&lt;script type="module"&gt;
   <mark>import { ThemeSwitcherElement } from
     'https://esm.sh/@aarongustafson/theme-switcher@1.0.1/theme-switcher.js?bundle&amp;target=es2022';</mark>
   <mark>customElements.define('theme-switcher',
@@ -56,11 +60,17 @@
 &lt;/script&gt;
 <mark>&lt;theme-switcher label="Color theme"&gt;</mark>
 <mark>&lt;/theme-switcher&gt;</mark></code></pre>
-			</micro-lighter>
-			<p>
-				<a href="./">Use the working local demos</a> while reviewing the
-				draft.
-			</p>
+				</micro-lighter>
+				<p>
+					<a href="./">Use the working local demos</a>. The generated
+					drop-in control shown here has no usable controls before
+					upgrade or without JavaScript. You can
+					<a href="./index.html#native-radios"
+						>supply radio markup instead</a
+					>
+					for native selection and form submission.
+				</p>
+			</section>
 		</main>
 		<footer>
 			<p>

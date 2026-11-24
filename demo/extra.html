@@ -17,21 +17,24 @@
 		<script type="module" src="../define.js"></script>
 	</head>
 	<body data-demo-page="embedded">
-		<theme-switcher
-			storage="none"
-			label="Reading palette"
-			choices='[{"label":"System","value":"system"},{"label":"Light","value":"light"},{"label":"Dark","value":"dark"},{"label":"Sepia","value":"sepia"}]'
-		>
-		</theme-switcher>
-		<p>
-			This paragraph uses the selected page palette. Sepia has its own
-			background and text colors.
-		</p>
-		<p>
-			<small
-				>This example doesn’t save your choice or change the parent
-				page.</small
+		<section id="sepia-reading-palette">
+			<h2>Add a Sepia reading palette</h2>
+			<theme-switcher
+				storage="none"
+				label="Reading palette"
+				choices='[{"label":"System","value":"system"},{"label":"Light","value":"light"},{"label":"Dark","value":"dark"},{"label":"Sepia","value":"sepia"}]'
 			>
-		</p>
+			</theme-switcher>
+			<p>
+				This paragraph uses the selected page palette. Sepia has its own
+				background and text colors.
+			</p>
+			<p>
+				<small
+					>This example doesn’t save your choice or change the parent
+					page.</small
+				>
+			</p>
+		</section>
 	</body>
 </html>

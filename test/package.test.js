@@ -147,16 +147,16 @@ describe('package contracts', () => {
 				'theme-switcher=dark',
 				'dark',
 			],
-			['malformed cookie', 1, null, 'theme-switcher=%broken', null],
+			['malformed cookie', 1, null, 'theme-switcher=%broken', 'system'],
 			[
 				'no valid saved choice',
 				1,
 				'unknown',
 				'theme-switcher=unknown',
-				null,
+				'system',
 			],
 		])(
-			'restores %s without overriding a server theme with invalid data',
+			'restores %s with System as the fallback for invalid data',
 			(_name, index, saved, cookie, expected) => {
 				const setAttribute = vi.fn();
 				const diagnostics = { warn: vi.fn() };
@@ -176,13 +176,10 @@ describe('package contracts', () => {
 					},
 					console: diagnostics,
 				});
-				if (expected === null)
-					expect(setAttribute).not.toHaveBeenCalled();
-				else
-					expect(setAttribute).toHaveBeenCalledWith(
-						'data-theme',
-						expected,
-					);
+				expect(setAttribute).toHaveBeenCalledWith(
+					'data-theme',
+					expected,
+				);
 				if (['system', 'light', 'dark'].includes(saved))
 					expect(readCookie).not.toHaveBeenCalled();
 				if (saved instanceof Error || cookie.includes('%broken'))
@@ -235,27 +232,38 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
-	it('documents generated controls before the authored fallback', () => {
-		const readme = readFileSync(new URL('README.md', root), 'utf8');
-		expect(readme).toContain(
-			'](https://aarongustafson.github.io/theme-switcher/)',
+	it('keeps the manual alternative’s authored radio defaults after enhancement and API changes', async () => {
+		const template = document.createElement('template');
+		template.innerHTML = readFileSync(
+			new URL('demo/index.html', root),
+			'utf8',
 		);
-		expect(readme).toContain(
-			'](https://aarongustafson.github.io/theme-switcher/demo/)',
+		const control = template.content.querySelector(
+			'#native-radios theme-switcher',
 		);
-		expect(readme).toContain('## Basic usage');
-		expect(readme).toContain('## Progressive enhancement');
-		expect(readme).toContain('](#progressive-enhancement)');
-		expect(readme).not.toContain('](#authored-radios-and-forms)');
-		expect(readme.indexOf('## Basic usage')).toBeLessThan(
-			readme.indexOf('## Progressive enhancement'),
-		);
-		expect(readme.indexOf('## Configuration')).toBeLessThan(
-			readme.indexOf('## Progressive enhancement'),
-		);
+		const fieldset = control.querySelector('fieldset');
+		expect(fieldset).not.toBeNull();
+		document.body.append(control);
+		await control.ready;
+		expect(control.querySelector('fieldset')).toBe(fieldset);
+		expect(control.label).toBe('Color theme');
+		expect(control.name).toBe('theme');
+		control.value = 'dark';
+		expect(control.value).toBe('dark');
+		expect(
+			[...control.querySelectorAll('input')].map((input) => [
+				input.value,
+				input.defaultChecked,
+			]),
+		).toEqual([
+			['system', true],
+			['light', false],
+			['dark', false],
+		]);
+		control.remove();
 	});
 
-	it('leads the demo with generated controls and retains a native fallback', () => {
+	it('leads the demo with an empty control and retains authored and native-only alternatives', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(
 			new URL('demo/index.html', root),
@@ -263,6 +271,16 @@ describe('package contracts', () => {
 		);
 		const controls = template.content.querySelectorAll('theme-switcher');
 		expect(controls[0].id).toBe('default');
+		expect(controls[0].childElementCount).toBe(0);
+		expect(controls[0].textContent.trim()).toBe('');
+		expect(controls[0].closest('.demo-section').id).toBe(
+			'generated-control',
+		);
+		expect(
+			template.content.querySelector(
+				'#native-radios theme-switcher fieldset',
+			),
+		).not.toBeNull();
 		expect(
 			template.content.querySelector('iframe[src="./fallback.html"]'),
 		).not.toBeNull();
