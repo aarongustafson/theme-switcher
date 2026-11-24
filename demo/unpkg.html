@@ -35,21 +35,25 @@
 				hidden
 			></p>
 
-			<p>
-				This draft isn’t on npm yet. After publication, use an import
-				map to resolve the base package, then load the registration
-				module:
-			</p>
-			<micro-lighter
-				class="code-panel"
-				language="html"
-				controls="copy"
-				data-label="HTML"
-			>
-				<pre
-					aria-label="Example code 1"
-					tabindex="0"
-				><code>&lt;script type="importmap"&gt;
+			<section id="unpkg-postpublication">
+				<h2>Postpublication import-map example</h2>
+				<p>
+					This page displays source only. It doesn’t execute the
+					import map or registration module, or render a live picker.
+					After the referenced versions are published, use an import
+					map to resolve the base package before loading the
+					registration module:
+				</p>
+				<micro-lighter
+					class="code-panel"
+					language="html"
+					controls="copy"
+					data-label="HTML"
+				>
+					<pre
+						aria-label="Example code 1"
+						tabindex="0"
+					><code>&lt;script type="importmap"&gt;
 {
   "imports": {
     <mark>"@aarongustafson/form-multi-switch":
@@ -62,11 +66,13 @@
 &lt;/script&gt;
 <mark>&lt;theme-switcher label="Color theme"&gt;</mark>
 <mark>&lt;/theme-switcher&gt;</mark></code></pre>
-			</micro-lighter>
-			<p>
-				<a href="./">Use the working local demos</a> while reviewing the
-				draft.
-			</p>
+				</micro-lighter>
+				<p>
+					<a href="./">Use the working local demos</a>. The generated
+					control shown in this source has no native fallback before
+					upgrade.
+				</p>
+			</section>
 		</main>
 		<footer>
 			<p>

@@ -17,14 +17,18 @@
 		<script type="module" src="../define.js"></script>
 	</head>
 	<body data-demo-page="embedded">
-		<theme-switcher
-			storage-key="theme-switcher-cookie-demo"
-			cookie
-			label="Saved site appearance"
-		></theme-switcher>
-		<p>
-			Select a theme here to save it to localStorage and a cookie named
-			<code>theme-switcher-cookie-demo</code>. Reload to restore it.
-		</p>
+		<section id="cookie-saved-appearance">
+			<h2>Save a preference in both stores</h2>
+			<theme-switcher
+				storage-key="theme-switcher-cookie-demo"
+				cookie
+				label="Saved site appearance"
+			></theme-switcher>
+			<p>
+				Select a theme here to save it to localStorage and a cookie
+				named
+				<code>theme-switcher-cookie-demo</code>. Reload to restore it.
+			</p>
+		</section>
 	</body>
 </html>

@@ -96,6 +96,86 @@ async function mount(page, authored, external) {
 	return page.locator('#control');
 }
 
+test('native-first demo retains authored reset defaults while changing and sharing the page preference', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	await page.goto('http://code-demo.test/demo/index.html#native-radios');
+	const first = page.locator('.code-demo-pair').first();
+	const control = first.locator('theme-switcher');
+	await expect(control).toHaveAttribute('id', 'native');
+	await expect(
+		control.getByRole('group', { name: 'Color theme' }),
+	).toBeVisible();
+	const system = control.getByRole('radio', { name: 'System', exact: true });
+	await system.focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(
+		control.getByRole('radio', { name: 'Light', exact: true }),
+	).toBeChecked();
+	await expect(control.locator('[data-value="light"]')).toHaveAttribute(
+		'data-focus',
+		'',
+	);
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+	await expect(page.locator('#default input[value="light"]')).toBeChecked();
+	expect(
+		await control.evaluate((element) => ({
+			submitted: new FormData(element.closest('form')).get('theme'),
+			saved: localStorage.getItem('theme-switcher-demo'),
+			default: element.querySelector('[value="system"]').defaultChecked,
+		})),
+	).toEqual({ submitted: 'light', saved: 'light', default: true });
+	await first.getByRole('button', { name: 'Reset appearance' }).click();
+	await expect(system).toBeChecked();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'system');
+	await expect(page.locator('#default input[value="system"]')).toBeChecked();
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('every demo alternative has a unique fragment targeting its heading and example', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	for (const name of [
+		'index',
+		'esm',
+		'unpkg',
+		'early',
+		'extra',
+		'cookie',
+		'fallback',
+		'storage',
+	]) {
+		await page.goto(`http://code-demo.test/demo/${name}.html`);
+		const blocks =
+			name === 'index'
+				? page.locator('.demo-section')
+				: page.locator('main > section, body > section');
+		expect(await blocks.count()).toBeGreaterThan(0);
+		for (const block of await blocks.all()) {
+			const id = await block.getAttribute('id');
+			expect(id).toMatch(/^[a-z][a-z0-9-]+$/);
+			await expect(page.locator(`[id="${id}"]`)).toHaveCount(1);
+			await expect(block.locator('h2, h3').first()).toBeVisible();
+			await page.evaluate((fragment) => {
+				location.hash = fragment;
+			}, id);
+			await expect(block).toHaveJSProperty('id', id);
+			expect(
+				await block.evaluate((element) => element.matches(':target')),
+			).toBe(true);
+		}
+		const ids = await page
+			.locator('[id]')
+			.evaluateAll((elements) => elements.map((element) => element.id));
+		expect(new Set(ids).size).toBe(ids.length);
+	}
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
 test('shared defaults preserve the selected page theme and isolated reading palette', async ({
 	page,
 }) => {
@@ -118,6 +198,167 @@ test('shared defaults preserve the selected page theme and isolated reading pale
 	await expect(frame.locator('body')).toHaveCSS('color', 'rgb(73, 57, 33)');
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 	await expectNativeFocus(page.locator('button[aria-controls]').first());
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('localized and icon-only demos keep native names, focus, and narrow RTL layout', async ({
+	page,
+	browserName,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	await page.setViewportSize({ width: 320, height: 800 });
+	await page.goto('http://code-demo.test/demo/index.html#arabic-rtl');
+	await expect(
+		page.locator('#french-labels').getByRole('group', { name: 'Thème' }),
+	).toBeVisible();
+	const arabic = page.locator('#arabic');
+	await expect(arabic).toHaveCSS('direction', 'rtl');
+	const system = arabic.getByRole('radio', { name: 'النظام', exact: true });
+	await system.focus();
+	await expect(system).toBeFocused();
+	await page.keyboard.press('ArrowRight');
+	// Native WebKit radios advance in DOM order here; Chromium and Firefox
+	// reverse horizontal arrow direction in RTL.
+	const next = browserName === 'webkit' ? 'light' : 'dark';
+	await expect(
+		arabic.getByRole('radio', {
+			name: next === 'light' ? 'فاتح' : 'داكن',
+			exact: true,
+		}),
+	).toBeChecked();
+	await expect(arabic.locator(`[data-value="${next}"]`)).toHaveAttribute(
+		'data-focus',
+		'',
+	);
+	await expect(page.locator('html')).toHaveAttribute('data-theme', next);
+	const icons = page.locator('#icon-only');
+	await expect(
+		icons.getByRole('group', { name: 'Icon-only appearance' }),
+	).toBeVisible();
+	for (const name of ['System', 'Light', 'Dark']) {
+		await expect(
+			icons.getByRole('radio', { name, exact: true }),
+		).toHaveCount(1);
+	}
+	expect(
+		await page.evaluate(
+			() => document.documentElement.scrollWidth <= innerWidth,
+		),
+	).toBe(true);
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('early demo restores before enhancement and falls back to System for invalid or blocked storage', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page, {
+		transformHtml: (html) =>
+			html.replace(
+				'<script type="module" src="../define.js"></script>',
+				'',
+			),
+	});
+	await page.goto('http://code-demo.test/demo/early.html');
+	for (const saved of ['dark', 'system', 'unknown']) {
+		await page.evaluate(
+			(value) => localStorage.setItem('theme-switcher-early-demo', value),
+			saved,
+		);
+		await page.reload();
+		await expect(page.locator('html')).toHaveAttribute(
+			'data-theme',
+			saved === 'unknown' ? 'system' : saved,
+		);
+		await expect(page.getByRole('radio')).toHaveCount(0);
+	}
+	await page.addInitScript(() => {
+		Object.defineProperty(window, 'localStorage', {
+			get() {
+				throw new DOMException('Blocked', 'SecurityError');
+			},
+		});
+	});
+	await page.reload();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'system');
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('cookie demo prefers local storage, restores the cookie fallback, and can reload', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	await page.goto('http://code-demo.test/demo/cookie.html');
+	await page.evaluate(() => {
+		localStorage.setItem('theme-switcher-cookie-demo', 'light');
+		document.cookie = 'theme-switcher-cookie-demo=dark; Path=/';
+	});
+	await page.reload();
+	await expect(
+		page.getByRole('radio', { name: 'Light', exact: true }),
+	).toBeChecked();
+	expect(await page.evaluate(() => document.cookie)).toContain(
+		'theme-switcher-cookie-demo=light',
+	);
+	await page.evaluate(() => {
+		localStorage.removeItem('theme-switcher-cookie-demo');
+		document.cookie = 'theme-switcher-cookie-demo=dark; Path=/';
+	});
+	await page.reload();
+	await expect(
+		page.getByRole('radio', { name: 'Dark', exact: true }),
+	).toBeChecked();
+	expect(
+		await page.evaluate(() =>
+			localStorage.getItem('theme-switcher-cookie-demo'),
+		),
+	).toBe('dark');
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('storage fixture reports a nonfatal diagnostic while keyboard theme changes still work', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	await page.goto('http://code-demo.test/demo/storage.html');
+	await expect(page.locator('theme-switcher')).toHaveAttribute(
+		'data-multi-switch-state',
+		'ready',
+	);
+	await expect(page.getByRole('status')).toContainText('storage:');
+	await page.getByRole('radio', { name: 'Light', exact: true }).focus();
+	await page.keyboard.press('Space');
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+	await expect(
+		page.getByRole('radio', { name: 'Light', exact: true }),
+	).toBeChecked();
+	await expect(page.getByRole('status')).toContainText(
+		'Storage intentionally blocked',
+	);
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('CDN source pages do not request theme modules or create live controls', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page);
+	const requests = [];
+	page.on('request', (request) => requests.push(request.url()));
+	for (const file of ['esm', 'unpkg']) {
+		await page.goto(`http://code-demo.test/demo/${file}.html`);
+		await expect(page.locator('main pre code')).toBeVisible();
+		await expect(page.locator('theme-switcher')).toHaveCount(0);
+		await expect(page.getByRole('radio')).toHaveCount(0);
+	}
+	expect(
+		requests.filter((url) =>
+			/esm\.sh|unpkg\.com|\/define\.js|\/theme-switcher\.js/.test(url),
+		),
+	).toEqual([]);
 	await page.unrouteAll({ behavior: 'wait' });
 });
 
@@ -479,6 +720,32 @@ test('forced-color icons follow the automatically adjusted label foreground', as
 
 test.describe('native fallback', () => {
 	test.use({ javaScriptEnabled: false });
+	test('actual fallback form submits without changing the theme or loading enhancement', async ({
+		page,
+	}) => {
+		await page.unrouteAll({ behavior: 'wait' });
+		await serveDemo(page);
+		await page.goto(
+			'http://code-demo.test/demo/fallback.html#native-form-submission',
+		);
+		const system = page.getByRole('radio', { name: 'System', exact: true });
+		await system.focus();
+		await page.keyboard.press('ArrowRight');
+		await expect(
+			page.getByRole('radio', { name: 'Light', exact: true }),
+		).toBeChecked();
+		await page.getByRole('button', { name: 'Submit to the URL' }).click();
+		await expect(page).toHaveURL(/fallback\.html\?theme=light/);
+		await expect(page.locator('html')).not.toHaveAttribute('data-theme');
+		await expect(page.locator('theme-switcher')).not.toHaveAttribute(
+			'data-multi-switch-state',
+		);
+		await page.goto('http://code-demo.test/demo/index.html');
+		await expect(page.locator('#native').getByRole('radio')).toHaveCount(3);
+		await expect(page.locator('#default').getByRole('radio')).toHaveCount(
+			0,
+		);
+	});
 	test('authored radios retain names, disabled state, and keyboard operation without JavaScript', async ({
 		page,
 		browserName,

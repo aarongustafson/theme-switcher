@@ -17,13 +17,16 @@
 		<script type="module" src="./storage.js"></script>
 	</head>
 	<body data-demo-page="embedded">
-		<theme-switcher label="Theme with blocked storage"></theme-switcher>
-		<output role="status"
-			>Waiting for the simulated storage restriction.</output
-		>
-		<p>
-			The page still changes theme, but this example can’t save the
-			choice.
-		</p>
+		<section id="storage-failure-diagnostics">
+			<h2>Keep theme changes working when storage fails</h2>
+			<theme-switcher label="Theme with blocked storage"></theme-switcher>
+			<output role="status"
+				>Waiting for the simulated storage restriction.</output
+			>
+			<p>
+				The page still changes theme, but this example can’t save the
+				choice.
+			</p>
+		</section>
 	</body>
 </html>
