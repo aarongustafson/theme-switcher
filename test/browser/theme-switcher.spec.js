@@ -96,13 +96,45 @@ async function mount(page, authored, external) {
 	return page.locator('#control');
 }
 
-test('native-first demo retains authored reset defaults while changing and sharing the page preference', async ({
+test('first drop-in example starts empty and upgrades to a working generated group', async ({
+	page,
+}) => {
+	await page.unrouteAll({ behavior: 'wait' });
+	await serveDemo(page, {
+		transformHtml: (html) =>
+			html.replace('<script type="module" src="./demo.js"></script>', ''),
+	});
+	await page.goto('http://code-demo.test/demo/index.html');
+	const first = page.locator('.code-demo-pair').first();
+	const control = first.locator('theme-switcher');
+	await expect(control).toHaveAttribute('id', 'default');
+	await expect(control.locator(':scope > *')).toHaveCount(0);
+	await expect(control.getByRole('radio')).toHaveCount(0);
+	await page.addScriptTag({ type: 'module', url: '/demo/demo.js' });
+	await page.evaluate(async () => {
+		await document.querySelector('#default').ready;
+	});
+	await expect(
+		control.getByRole('group', { name: 'Theme', exact: true }),
+	).toBeVisible();
+	await expect(control.getByRole('radio')).toHaveCount(3);
+	await control.getByRole('radio', { name: 'System', exact: true }).focus();
+	await page.keyboard.press('ArrowRight');
+	await expect(
+		control.getByRole('radio', { name: 'Light', exact: true }),
+	).toBeChecked();
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+	await expect(page.locator('#native input[value="light"]')).toBeChecked();
+	await page.unrouteAll({ behavior: 'wait' });
+});
+
+test('manual radio demo retains authored reset defaults while changing and sharing the page preference', async ({
 	page,
 }) => {
 	await page.unrouteAll({ behavior: 'wait' });
 	await serveDemo(page);
 	await page.goto('http://code-demo.test/demo/index.html#native-radios');
-	const first = page.locator('.code-demo-pair').first();
+	const first = page.locator('#native-radios .code-demo-pair');
 	const control = first.locator('theme-switcher');
 	await expect(control).toHaveAttribute('id', 'native');
 	await expect(
@@ -345,14 +377,15 @@ test('CDN source pages do not request theme modules or create live controls', as
 	page,
 }) => {
 	await page.unrouteAll({ behavior: 'wait' });
-	await serveDemo(page);
 	const requests = [];
 	page.on('request', (request) => requests.push(request.url()));
 	for (const file of ['esm', 'unpkg']) {
+		await serveDemo(page);
 		await page.goto(`http://code-demo.test/demo/${file}.html`);
 		await expect(page.locator('main pre code')).toBeVisible();
 		await expect(page.locator('theme-switcher')).toHaveCount(0);
 		await expect(page.getByRole('radio')).toHaveCount(0);
+		await page.unrouteAll({ behavior: 'wait' });
 	}
 	expect(
 		requests.filter((url) =>

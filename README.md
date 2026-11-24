@@ -6,22 +6,21 @@
 [![License](https://img.shields.io/npm/l/@aarongustafson/theme-switcher)](https://github.com/aarongustafson/theme-switcher/blob/main/LICENSE)
 [![Type definitions](https://img.shields.io/npm/types/@aarongustafson/theme-switcher)](https://github.com/aarongustafson/theme-switcher/blob/main/theme-switcher.d.ts)
 
-`<theme-switcher>` enhances native theme radios, sets `data-theme` on
+`<theme-switcher>` creates a theme picker, sets `data-theme` on
 `<html>`, and remembers the choice in `localStorage`. You supply the
 themes’ colors in your CSS. Every control must offer `system`, `light`,
 and `dark`; you can add other themes.
 
 This component extends
 [`<form-multi-switch>`](https://github.com/aarongustafson/form-multi-switch),
-with the same styling hooks and native keyboard behavior. Authored radios
-remain usable for selection and form submission without JavaScript, but
-they don’t change the page’s theme or save a preference.
+with the same styling hooks and native keyboard behavior. Drop in an empty
+element to generate the controls, or supply your own radio markup.
 
 ## Demos
 
 [Project site](https://aarongustafson.github.io/theme-switcher/)
 
-- [Local demos](https://aarongustafson.github.io/theme-switcher/demo/) ([source](demo/index.html)): authored radios, generated controls, extra themes, labels, persistence, and styling.
+- [Local demos](https://aarongustafson.github.io/theme-switcher/demo/) ([source](demo/index.html)): generated controls, authored radios, extra themes, labels, persistence, and styling.
 - [esm.sh source example](https://aarongustafson.github.io/theme-switcher/demo/esm.html) ([source](demo/esm.html)).
 - [unpkg source example](https://aarongustafson.github.io/theme-switcher/demo/unpkg.html) ([source](demo/unpkg.html)).
 
@@ -59,7 +58,22 @@ run `npm install` before serving the repository.
 
 ## Basic usage
 
-Wrap a labeled radio group in `<theme-switcher>`:
+### Generate the controls instead
+
+Drop in an empty element:
+
+```html
+<theme-switcher></theme-switcher>
+```
+
+The component creates a `<fieldset>`, `<legend>`, and System, Light, and Dark
+radios. Before upgrade, or if JavaScript fails, this version has no usable
+controls. [Supply your own radios](#supply-the-markup-yourself) when you need
+native selection and form submission without JavaScript.
+
+### Supply the markup yourself
+
+You can wrap a labeled radio group instead:
 
 ```html
 <theme-switcher>
@@ -76,22 +90,14 @@ Wrap a labeled radio group in `<theme-switcher>`:
 
 The browser provides radio selection and form submission. The component adds
 theme changes, persistence, synchronization, and segmented-control styles.
-Put the group in a form when you need to submit it. Without JavaScript, a
-server can validate the submitted preference and apply it on the next page load.
+Put the group in a form when you need to submit it. Without JavaScript,
+these radios still select and submit a value, but they don’t change the page’s
+theme or save a preference. A server can validate the submitted preference
+and apply it on the next page load.
 
 Your radios define the choices, group name, and legend. See
 [progressive enhancement](#progressive-enhancement) for configuration and
 reset behavior.
-
-### Generate the controls instead
-
-```html
-<theme-switcher></theme-switcher>
-```
-
-Without an authored fieldset, the component creates a `<fieldset>`, `<legend>`,
-and System, Light, and Dark radios. Before upgrade, or if JavaScript fails,
-this version has no usable controls.
 
 ## Give the page its colors
 
@@ -398,7 +404,7 @@ your module sources and import map as required by your policy.
 
 ## Progressive enhancement
 
-The [basic example](#basic-usage) keeps useful native controls
+The [authored example](#supply-the-markup-yourself) keeps useful native controls
 before upgrade and when JavaScript fails. The component’s initial
 `value` attribute can select an existing radio without changing its reset default.
 Unsupported values report a configuration error. Later `value` attribute changes

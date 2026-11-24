@@ -232,13 +232,15 @@ describe('package contracts', () => {
 		).toContain('@aarongustafson/form-multi-switch');
 	});
 
-	it('keeps the first demo’s authored radio defaults after enhancement and API changes', async () => {
+	it('keeps the manual alternative’s authored radio defaults after enhancement and API changes', async () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(
 			new URL('demo/index.html', root),
 			'utf8',
 		);
-		const control = template.content.querySelector('theme-switcher');
+		const control = template.content.querySelector(
+			'#native-radios theme-switcher',
+		);
 		const fieldset = control.querySelector('fieldset');
 		expect(fieldset).not.toBeNull();
 		document.body.append(control);
@@ -261,20 +263,24 @@ describe('package contracts', () => {
 		control.remove();
 	});
 
-	it('leads the demo with authored controls and retains generated and native-only alternatives', () => {
+	it('leads the demo with an empty control and retains authored and native-only alternatives', () => {
 		const template = document.createElement('template');
 		template.innerHTML = readFileSync(
 			new URL('demo/index.html', root),
 			'utf8',
 		);
 		const controls = template.content.querySelectorAll('theme-switcher');
-		expect(controls[0].id).toBe('native');
-		expect(controls[0].querySelector('fieldset')).not.toBeNull();
+		expect(controls[0].id).toBe('default');
+		expect(controls[0].childElementCount).toBe(0);
+		expect(controls[0].textContent.trim()).toBe('');
+		expect(controls[0].closest('.demo-section').id).toBe(
+			'generated-control',
+		);
 		expect(
-			[...controls]
-				.find((control) => control.id === 'default')
-				.querySelector('fieldset'),
-		).toBeNull();
+			template.content.querySelector(
+				'#native-radios theme-switcher fieldset',
+			),
+		).not.toBeNull();
 		expect(
 			template.content.querySelector('iframe[src="./fallback.html"]'),
 		).not.toBeNull();

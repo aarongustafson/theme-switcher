@@ -21,7 +21,8 @@
 			<p class="eyebrow">Web component / Examples</p>
 			<h1>&lt;theme-switcher&gt;</h1>
 			<p class="lede">
-				A theme picker that enhances native radios, sets
+				A theme picker that generates native radios or enhances your own
+				markup, sets
 				<code>data-theme</code> on <code>&lt;html&gt;</code>, and
 				remembers the choice. Your CSS supplies the page’s colors. See
 				the
@@ -75,11 +76,68 @@
 				changes to your device’s color preference.
 			</p>
 			<section>
-				<h2>Start with native radios</h2>
-				<div class="demo-section" id="native-radios">
-					<h3>Enhance an authored group</h3>
+				<h2>Start with an empty control</h2>
+				<div class="demo-section" id="generated-control">
+					<h3>Drop in the theme picker</h3>
 					<p>
-						Wrap a labeled radio group in
+						Use an empty <code>&lt;theme-switcher&gt;</code> to
+						generate a legend and System, Light, and Dark radios.
+						Before upgrade, or if JavaScript fails, this version has
+						no usable controls. You can
+						<a href="#native-radios"
+							>supply your own radio markup</a
+						>
+						instead when you need native controls without
+						JavaScript.
+					</p>
+					<div class="code-demo-pair">
+						<micro-lighter
+							class="code-panel"
+							language="html"
+							controls="copy"
+							data-label="HTML and page CSS"
+						>
+							<pre
+								aria-label="Generated control and page colors code"
+								tabindex="0"
+							><code><mark>&lt;theme-switcher
+  storage-key="theme-switcher-demo"&gt;</mark>
+<mark>&lt;/theme-switcher&gt;</mark>
+
+/* Your page styles */
+:root { color-scheme: light dark; }
+:root[<mark>data-theme='light'</mark>] {
+  color-scheme: light;
+}
+:root[<mark>data-theme='dark'</mark>] {
+  color-scheme: dark;
+}
+body {
+  background: Canvas;
+  color: CanvasText;
+}</code></pre>
+						</micro-lighter>
+						<div class="demo" data-demo-label="Live example">
+							<theme-switcher
+								id="default"
+								storage-key="theme-switcher-demo"
+							></theme-switcher>
+							<output id="theme-status" aria-live="polite"
+								>Waiting for the component.</output
+							>
+							<p>
+								<small
+									>Reload to restore the saved choice.</small
+								>
+							</p>
+						</div>
+					</div>
+				</div>
+				<div class="demo-section" id="native-radios">
+					<h3>Supply the radio markup yourself</h3>
+					<p>
+						As an alternative to the empty control, wrap a labeled
+						radio group in
 						<code>&lt;theme-switcher&gt;</code>. The browser
 						provides selection and form submission; the component
 						adds theme changes, persistence, and segmented-control
@@ -194,56 +252,6 @@
 								src="./fallback.html"
 								title="Native theme radios without the component module"
 							></iframe>
-						</div>
-					</div>
-				</div>
-				<div class="demo-section" id="generated-control">
-					<h3>Generate the group instead</h3>
-					<p>
-						Leave out the fieldset to generate a legend and System,
-						Light, and Dark radios. Before upgrade, or if JavaScript
-						fails, this version has no usable controls.
-					</p>
-					<div class="code-demo-pair">
-						<micro-lighter
-							class="code-panel"
-							language="html"
-							controls="copy"
-							data-label="HTML and page CSS"
-						>
-							<pre
-								aria-label="Generated control and page colors code"
-								tabindex="0"
-							><code><mark>&lt;theme-switcher
-  storage-key="theme-switcher-demo"&gt;</mark>
-<mark>&lt;/theme-switcher&gt;</mark>
-
-/* Your page styles */
-:root { color-scheme: light dark; }
-:root[<mark>data-theme='light'</mark>] {
-  color-scheme: light;
-}
-:root[<mark>data-theme='dark'</mark>] {
-  color-scheme: dark;
-}
-body {
-  background: Canvas;
-  color: CanvasText;
-}</code></pre>
-						</micro-lighter>
-						<div class="demo" data-demo-label="Live example">
-							<theme-switcher
-								id="default"
-								storage-key="theme-switcher-demo"
-							></theme-switcher>
-							<output id="theme-status" aria-live="polite"
-								>Waiting for the component.</output
-							>
-							<p>
-								<small
-									>Reload to restore the saved choice.</small
-								>
-							</p>
 						</div>
 					</div>
 				</div>
